@@ -1,26 +1,34 @@
 import streamlit as st
 from openai import OpenAI
 
-# 🔑 Use secrets (for cloud)
+# 🎨 Page config
+st.set_page_config(page_title="AI DBA Assistant", layout="wide")
+
+# 🔑 API Key
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-# 🧠 Initialize history
+# 🧠 Session state
 if "history" not in st.session_state:
     st.session_state.history = []
 
-# 🎨 Page config
-st.set_page_config(page_title="AI DBA Assistant", layout="wide")
+# 🎨 Sidebar (SaaS Navigation)
+st.sidebar.title("🚀 AI DBA Assistant")
+st.sidebar.markdown("---")
+
+menu = st.sidebar.radio(
+    "📌 Navigation",
+    ["Analyze", "History", "About"]
+)
 
 # 🚀 Title
 st.title("🚀 AI Oracle Performance Assistant")
 
-# 🧭 Tabs
-tab1, tab2, tab3 = st.tabs(["🔍 Analyze", "💬 History", "ℹ️ About"])
+# =========================
+# 🔍 ANALYZE PAGE
+# =========================
+if menu == "Analyze":
 
-# =========================
-# 🔍 TAB 1: ANALYZE
-# =========================
-with tab1:
+    st.header("🔍 Analyze SQL")
 
     col1, col2 = st.columns(2)
 
@@ -34,23 +42,25 @@ with tab1:
         st.markdown("### 💡 Tips")
         st.write("Paste SQL or describe your issue clearly")
 
-    # 📝 Input
+    st.subheader("📥 Input")
+
     user_input = st.text_area("Enter your query or issue:")
 
-    # 📂 File Upload
     uploaded_file = st.file_uploader("Upload SQL file", type=["sql", "txt"])
 
     file_content = ""
+
     if uploaded_file is not None:
         file_content = uploaded_file.read().decode("utf-8")
-        st.subheader("📄 File Content")
-        st.code(file_content, language="sql")
+
+        with st.expander("📄 View Uploaded SQL"):
+            st.code(file_content, language="sql")
 
     # ▶️ DB Button
     if st.button("Run SQL on DB"):
         st.info("⚠️ Database feature works only in local environment")
 
-    # 🤖 Analyze Button
+    # 🤖 Analyze
     if st.button("Analyze"):
 
         input_data = file_content if file_content else user_input
@@ -88,6 +98,10 @@ with tab1:
 
                     ai_reply = response.choices[0].message.content
 
+                    st.subheader("📊 Results")
+                    st.write(ai_reply)
+
+                    # Save history
                     st.session_state.history.append(("User", input_data))
                     st.session_state.history.append(("AI", ai_reply))
 
@@ -97,15 +111,16 @@ with tab1:
         else:
             st.warning("Please enter input or upload file")
 
-    # 🧹 Clear history
+    # Clear history
     if st.button("Clear History"):
         st.session_state.history = []
 
 # =========================
-# 💬 TAB 2: HISTORY
+# 💬 HISTORY PAGE
 # =========================
-with tab2:
-    st.subheader("💬 Conversation History")
+elif menu == "History":
+
+    st.header("💬 Conversation History")
 
     for role, msg in st.session_state.history:
         if role == "User":
@@ -114,10 +129,11 @@ with tab2:
             st.markdown(f"**🤖 AI:** {msg}")
 
 # =========================
-# ℹ️ TAB 3: ABOUT
+# ℹ️ ABOUT PAGE
 # =========================
-with tab3:
-    st.subheader("ℹ️ About This App")
+elif menu == "About":
+
+    st.header("ℹ️ About")
 
     st.write("""
     This is an AI-powered Oracle Performance Assistant.
@@ -132,3 +148,7 @@ with tab3:
     - Streamlit
     - OpenAI API
     """)
+
+# 🎯 Footer
+st.markdown("---")
+st.caption("Built by Prem Kumar | AI DBA Assistant")
