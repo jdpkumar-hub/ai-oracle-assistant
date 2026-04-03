@@ -42,6 +42,7 @@ user_input = st.text_area("Enter your query or issue:")
 
 # ▶️ Run SQL on Database
 if st.button("Run SQL on DB"):
+ st.info("⚠️ Database feature works only in local environment")
     if user_input:
         try:
             conn = get_connection()
