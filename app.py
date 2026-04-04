@@ -38,7 +38,8 @@ if "username" not in st.session_state:
 # 🔐 AUTH SCREEN
 # =========================
 if not st.session_state.logged_in:
-
+    st.sidebar.image("logo.png", use_container_width=True)
+    st.sidebar.markdown("## AI DBA Assistant")
     st.sidebar.title("🔐 Account")
 
     menu = st.sidebar.selectbox("Select", ["Login", "Sign Up"])
@@ -55,6 +56,7 @@ else:
 
     st.sidebar.image("logo.png", use_container_width=True)
     st.sidebar.title(" AI DBA Assistant")
+    
 
     # 👤 Show logged-in user
     st.sidebar.write(f"👤 {st.session_state.username}")
