@@ -12,7 +12,6 @@ from admin import admin_page
 # =========================
 st.set_page_config(page_title="AI DBA Assistant", layout="wide")
 
-
 # =========================
 # 🔑 SETUP
 # =========================
@@ -39,7 +38,9 @@ if "username" not in st.session_state:
 # 🔐 AUTH SCREEN
 # =========================
 if not st.session_state.logged_in:
-     st.sidebar.title("🔐 Account")
+
+    st.sidebar.title("🔐 Account")
+
     menu = st.sidebar.selectbox("Select", ["Login", "Sign Up"])
 
     if menu == "Login":
@@ -52,16 +53,14 @@ if not st.session_state.logged_in:
 # =========================
 else:
 
+    st.sidebar.image("logo.png", use_container_width=True)
     st.sidebar.title(" AI DBA Assistant")
 
     # 👤 Show logged-in user
-    st.sidebar.image("logo.png", use_container_width=True)
     st.sidebar.write(f"👤 {st.session_state.username}")
     st.sidebar.markdown("---")
 
-    # =========================
-    # 🔐 ROLE FROM DB (FINAL FIX)
-    # =========================
+    # 🔐 ROLE FROM DB
     try:
         user_data = supabase.table("users").select("role").eq("email", st.session_state.username).execute()
         user_role = user_data.data[0]["role"] if user_data.data else "user"
@@ -108,4 +107,4 @@ else:
 # 📌 FOOTER
 # =========================
 st.markdown("---")
-st.caption("© AI Oracle DBA Assistant | Built by Pradarshan Kumar JD 🚀")
+st.caption("© AI Oracle DBA Assistant | Built by Pradarshan Kumar JD ")
