@@ -7,6 +7,7 @@ from analyze import analyze_page
 from history import history_page
 from admin import admin_page
 from auth import login, signup, verify_otp, reset_password
+ 
 
 # =========================
 # 🎨 CONFIG
@@ -40,9 +41,6 @@ if "username" not in st.session_state:
 # =========================
 if not st.session_state.logged_in:
 
-    st.sidebar.image("logo.png", use_container_width=True)
-    st.sidebar.title("🔐 Account")
-
     menu = st.sidebar.selectbox("Select", ["Login", "Sign Up", "Reset Password"])
 
     if st.session_state.get("show_otp"):
@@ -55,7 +53,7 @@ if not st.session_state.logged_in:
         signup(supabase)
 
     elif menu == "Reset Password":
-        reset_password(supabase)
+        reset_password(supabase)         
 
 # =========================
 # 🚀 MAIN APP

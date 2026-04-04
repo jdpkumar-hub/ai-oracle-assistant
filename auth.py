@@ -1,6 +1,37 @@
 import streamlit as st
 from utils import is_strong_password, hash_password, verify_password
 import random
+import smtplib
+from email.mime.text import MIMEText
+
+# =========================
+# 📧 SEND OTP EMAIL
+# =========================
+def send_otp_email(to_email, otp):
+
+    sender = st.secrets["EMAIL_ADDRESS"]
+    password = st.secrets["EMAIL_PASSWORD"]
+
+    subject = "Your OTP Code - AI DBA Assistant"
+    body = f"Your OTP is: {otp}"
+
+    msg = MIMEText(body)
+    msg["Subject"] = subject
+    msg["From"] = sender
+    msg["To"] = to_email
+
+    try:
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()
+            server.login(sender, password)
+            server.send_message(msg)
+        return True
+
+    except Exception as e:
+        st.error("Email sending failed ❌")
+        st.write(e)
+        return False
+
 
 # =========================
 # 📝 SIGNUP + OTP
@@ -35,8 +66,14 @@ def signup(supabase):
         otp = str(random.randint(100000, 999999))
         st.session_state.otp = otp
 
-        st.info(f"Your OTP: {otp}")  # replace with email later
-        st.session_state.show_otp = True
+        # Send email
+        sent = send_otp_email(email, otp)
+
+        if sent:
+            st.success("OTP sent to your email 📧")
+            st.session_state.show_otp = True
+        else:
+            st.error("Failed to send OTP")
 
 
 # =========================
@@ -47,7 +84,7 @@ def verify_otp(supabase):
 
     user_otp = st.text_input("Enter OTP")
 
-    if st.button("Verify"):
+    if st.button("Verify OTP"):
 
         if user_otp == st.session_state.get("otp"):
 
@@ -58,9 +95,11 @@ def verify_otp(supabase):
 
             st.session_state.logged_in = True
             st.session_state.username = st.session_state.temp_email
+            st.session_state.show_otp = False
 
             st.success("Account created & verified ✅")
             st.rerun()
+
         else:
             st.error("Invalid OTP ❌")
 
