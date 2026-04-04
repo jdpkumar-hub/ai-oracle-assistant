@@ -207,8 +207,8 @@ def reset_password_confirm(supabase):
             st.session_state.pop("reset_otp", None)
             st.session_state.pop("reset_expiry", None)
 
-st.success("Password updated & logged in ✅")
-st.rerun()
+            st.success("Password updated & logged in ✅")
+            st.rerun()
 
     with col2:
         if st.button("Resend OTP"):
