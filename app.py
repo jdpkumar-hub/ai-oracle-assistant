@@ -42,31 +42,34 @@ def signup():
     if st.button("Create Account"):
         if new_user and new_pass:
 
-            # 🔍 Check if user exists FIRST
+            # Check existing user
             result = supabase.table("users").select("*").eq("username", new_user).execute()
 
             if result.data:
-                st.warning("⚠️ Username already exists. Try another.")
+                st.warning("⚠️ Username already exists")
                 return
 
-            # 🔐 Hash password
+            # Password validation
+            if len(new_pass) < 6:
+                st.warning("Password must be at least 6 characters")
+                return
+
+            # Hash password
             hashed = bcrypt.hashpw(new_pass.encode(), bcrypt.gensalt()).decode()
 
-            try:
-                supabase.table("users").insert({
-                    "username": new_user,
-                    "password": hashed
-                }).execute()
+            supabase.table("users").insert({
+                "username": new_user,
+                "password": hashed
+            }).execute()
 
-                st.success("Account created successfully ✅")
+            # ✅ AUTO LOGIN
+            st.session_state.logged_in = True
+            st.session_state.username = new_user
 
-            except Exception as e:
-                st.error("Something went wrong ❌")
-                st.write(e)
-        else:
-            st.warning("Please fill all fields")
-
-# =========================
+            st.success("Account created & logged in ✅")
+            st.rerun()
+            
+  # =========================
 # 🔐 LOGIN (SUPABASE)
 # =========================
 def login():
