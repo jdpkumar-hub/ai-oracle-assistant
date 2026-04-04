@@ -7,10 +7,10 @@ from utils import is_strong_password, hash_password, verify_password
 def signup(supabase):
     st.title("📝 Sign Up")
 
-    email = st.text_input("Email")
-    password = st.text_input("Password", type="password")
+    email = st.text_input("Email", key="signup_email")
+    password = st.text_input("Password", type="password", key="signup_password")
 
-    if st.button("Create Account"):
+    if st.button("Create Account", key="signup_btn"):
 
         # ✅ Empty check
         if not email or not password:
@@ -22,17 +22,18 @@ def signup(supabase):
             st.warning("Password must contain:\n- 6+ chars\n- 1 uppercase\n- 1 number")
             return
 
-        # 🔍 Check if user exists
-        result = supabase.table("users").select("*").eq("email", email).execute()
-
-        if result.data:
-            st.warning("⚠️ Email already registered")
-            return
-
-        # 🔒 Hash password
-        hashed = hash_password(password)
-
         try:
+            # 🔍 Check if user exists
+            result = supabase.table("users").select("*").eq("email", email).execute()
+
+            if result.data:
+                st.warning("⚠️ Email already registered")
+                return
+
+            # 🔒 Hash password
+            hashed = hash_password(password)
+
+            # 💾 Insert user
             supabase.table("users").insert({
                 "email": email,
                 "password": hashed
@@ -56,22 +57,33 @@ def signup(supabase):
 def login(supabase):
     st.title("🔐 Login")
 
-    email = st.text_input("Email")
-    password = st.text_input("Password", type="password")
+    email = st.text_input("Email", key="login_email")
+    password = st.text_input("Password", type="password", key="login_password")
 
-    if st.button("Login"):
+    if st.button("Login", key="login_btn"):
 
-        result = supabase.table("users").select("*").eq("email", email).execute()
+        # ✅ Empty check
+        if not email or not password:
+            st.warning("Please enter email and password")
+            return
 
-        if result.data:
-            stored_password = result.data[0]["password"]
+        try:
+            result = supabase.table("users").select("*").eq("email", email).execute()
 
-            if verify_password(password, stored_password):
-                st.session_state.logged_in = True
-                st.session_state.username = email
-                st.success("Login successful ✅")
-                st.rerun()
+            if result.data:
+                stored_password = result.data[0]["password"]
+
+                if verify_password(password, stored_password):
+                    st.session_state.logged_in = True
+                    st.session_state.username = email
+
+                    st.success("Login successful ✅")
+                    st.rerun()
+                else:
+                    st.error("Wrong password ❌")
             else:
-                st.error("Wrong password ❌")
-        else:
-            st.error("User not found ❌")
+                st.error("User not found ❌")
+
+        except Exception as e:
+            st.error("Login failed ❌")
+            st.write(e)
