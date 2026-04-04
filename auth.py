@@ -21,8 +21,8 @@ def send_otp_email(to_email, otp):
     msg["To"] = to_email
 
     # 🔍 DEBUG (TEMPORARY)
-    st.write("📧 Sender:", sender)
-    st.write("🔑 Password length:", len(password))
+    #st.write("📧 Sender:", sender)
+    #st.write("🔑 Password length:", len(password))
 
     try:
         server = smtplib.SMTP("smtp.gmail.com", 587)
