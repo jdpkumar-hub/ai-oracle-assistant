@@ -108,10 +108,10 @@ st.markdown("""
 .footer {
     position: fixed;
     bottom: 10px;
-    left: 20px;
+    left: 150px;
     width: 100%;
     color: gray;
-    font-size: 14px;
+    font-size: 16px;
 }
 </style>
 
