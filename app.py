@@ -62,8 +62,8 @@ if not st.session_state.logged_in:
 # =========================
 else:
 
-    st.sidebar.image("logo.png", use_container_width=True)
-    st.sidebar.title(" AI DBA Assistant")
+   # st.sidebar.image("logo.png", use_container_width=True)
+   #st.sidebar.title(" AI DBA Assistant")
     
 
     # 👤 Show logged-in user
