@@ -13,7 +13,8 @@ from auth import login, signup, verify_otp, reset_password
 # 🎨 CONFIG
 # =========================
 st.set_page_config(page_title="AI DBA Assistant", layout="wide")
-
+st.sidebar.image("logo.png", use_container_width=True)
+st.sidebar.title(" AI DBA Assistant")
 # =========================
 # 🔑 SETUP
 # =========================
