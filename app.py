@@ -6,13 +6,14 @@ from auth import login, signup, verify_otp, reset_password_request, reset_passwo
 from analyze import analyze_page
 from history import history_page
 from admin import admin_page
+import payments
 
 # =========================
 # CONFIG
 # =========================
 st.set_page_config(page_title="AI DBA Assistant", layout="wide")
 
-# Sidebar
+# Sidebar Branding
 st.sidebar.image("logo.png", use_container_width=True)
 st.sidebar.markdown("## AI DBA Assistant")
 st.sidebar.markdown("---")
@@ -38,6 +39,18 @@ if "history" not in st.session_state:
 
 if "username" not in st.session_state:
     st.session_state.username = ""
+
+# =========================
+# HANDLE PAYMENT SUCCESS
+# =========================
+query_params = st.query_params
+
+if query_params.get("success") == "true" and st.session_state.logged_in:
+    st.success("Payment successful 🎉")
+
+    supabase.table("users").update({
+        "role": "pro"
+    }).eq("email", st.session_state.username).execute()
 
 # =========================
 # AUTH FLOW
@@ -69,28 +82,63 @@ else:
     st.sidebar.write(f"👤 {st.session_state.username}")
     st.sidebar.markdown("---")
 
-    # Role check
+    # 🔐 Role fetch
     try:
         user_data = supabase.table("users").select("role").eq(
             "email", st.session_state.username
         ).execute()
 
         user_role = user_data.data[0]["role"] if user_data.data else "user"
+
     except:
         user_role = "user"
 
+    # 👑 Role display
     if user_role == "admin":
         st.sidebar.success("👑 Admin")
+    elif user_role == "pro":
+        st.sidebar.success("💳 Pro User")
+    else:
+        st.sidebar.info("👤 Free User")
+
+    # =========================
+    # 💳 UPGRADE BUTTON (ONLY FREE USERS)
+    # =========================
+    if user_role == "user":
+        st.sidebar.markdown("---")
+        st.sidebar.subheader("💳 Upgrade")
+
+        if st.sidebar.button("🚀 Upgrade to Pro"):
+            checkout_url = payments.create_checkout_session(
+                st.session_state.username
+            )
+            st.markdown(f"[👉 Click here to Pay]({checkout_url})")
+
+    # =========================
+    # MENU
+    # =========================
+    if user_role == "admin":
         page = st.sidebar.radio("Menu", ["Analyze", "History", "Admin"])
     else:
-        st.sidebar.info("👤 User")
         page = st.sidebar.radio("Menu", ["Analyze", "History"])
 
+    # =========================
+    # LOGOUT
+    # =========================
     if st.sidebar.button("Logout"):
         st.session_state.logged_in = False
         st.session_state.username = ""
         st.rerun()
 
+    # =========================
+    # PRO LOCK (OPTIONAL)
+    # =========================
+    if user_role == "user":
+        st.warning("⚠️ Free version: Upgrade to Pro for full features 💳")
+
+    # =========================
+    # PAGES
+    # =========================
     if page == "Analyze":
         analyze_page(client)
 

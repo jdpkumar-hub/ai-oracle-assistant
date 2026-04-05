@@ -3,3 +3,4 @@ openai
 oracledb
 bcrypt
 supabase
+stripe
