@@ -5,17 +5,24 @@ stripe.api_key = st.secrets["STRIPE_SECRET_KEY"]
 
 def create_checkout_session(email):
 
-    session = stripe.checkout.Session.create(
-        payment_method_types=["card"],
-        line_items=[{
-            "price": st.secrets["STRIPE_PRICE_ID"],
-            "quantity": 1,
-        }],
-        mode="payment",
-        customer_email=email,
+    try:
+        session = stripe.checkout.Session.create(
+            payment_method_types=["card"],
+            line_items=[{
+                "price": st.secrets["STRIPE_PRICE_ID"],
+                "quantity": 1,
+            }],
+            mode="subscription",  # 🔥 IMPORTANT
 
-        success_url=st.secrets["APP_URL"] + "?success=true",
-        cancel_url=st.secrets["APP_URL"] + "?canceled=true",
-    )
+            customer_email=email,
 
-    return session.url
+            success_url=st.secrets["APP_URL"] + "?success=true",
+            cancel_url=st.secrets["APP_URL"] + "?canceled=true",
+        )
+
+        return session.url
+
+    except Exception as e:
+        st.error("Stripe Error ❌")
+        st.write(e)
+        return None
