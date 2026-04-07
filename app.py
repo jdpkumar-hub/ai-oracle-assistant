@@ -1,68 +1,64 @@
-    import streamlit as st
-    from openai import OpenAI
-    from supabase import create_client
+import streamlit as st
+from openai import OpenAI
+from supabase import create_client
 
-    from auth import login, signup, verify_otp, reset_password_request, reset_password_confirm
-    from analyze import analyze_page
-    from history import history_page
-    from admin import admin_page
-    import payments
+from auth import login, signup, verify_otp, reset_password_request, reset_password_confirm
+from analyze import analyze_page
+from history import history_page
+from admin import admin_page
+import payments
 
-    # =========================
-    # CONFIG
-    # =========================
-    st.set_page_config(page_title="AI DBA Assistant", layout="wide")
+# =========================
+# CONFIG
+# =========================
+st.set_page_config(page_title="AI DBA Assistant", layout="wide")
 
-    st.sidebar.image("logo.png", use_container_width=True)
-    st.sidebar.markdown("---")
+st.sidebar.image("logo.png", use_container_width=True)
+st.sidebar.markdown("---")
 
-    # =========================
-    # SETUP
-    # =========================
-    client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+# =========================
+# SETUP
+# =========================
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-    supabase = create_client(
+supabase = create_client(
     st.secrets["SUPABASE_URL"],
     st.secrets["SUPABASE_KEY"]
-    )
+)
 
-    # =========================
-    # SESSION INIT
-    # =========================
-    if "logged_in" not in st.session_state:
+# =========================
+# SESSION INIT
+# =========================
+if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-    if "history" not in st.session_state:
+if "history" not in st.session_state:
     st.session_state.history = []
 
-    if "username" not in st.session_state:
+if "username" not in st.session_state:
     st.session_state.username = ""
 
+# =========================
+# STRIPE SUCCESS HANDLER
+# =========================
+query_params = st.query_params
 
-    # =========================
-    # STRIPE SUCCESS HANDLER
-    # =========================
-    query_params = st.query_params
-
-    if query_params.get("success") == "true":
+if query_params.get("success") == "true":
 
     st.success("🎉 **Payment Successful! Your account is upgraded to PRO 🚀**")
     st.markdown("### 🔐 **Please login again to continue**")
 
-    # Clear params
     st.query_params.clear()
 
-    # Reset session
     st.session_state.logged_in = False
     st.session_state.username = ""
 
     st.rerun()
 
-
-    # =========================
-    # AUTH SECTION
-    # =========================
-    if not st.session_state.logged_in:
+# =========================
+# AUTH SECTION
+# =========================
+if not st.session_state.logged_in:
 
     menu = st.sidebar.selectbox("Select", ["Login", "Sign Up", "Reset Password"])
 
@@ -81,16 +77,14 @@
     elif menu == "Reset Password":
         reset_password_request(supabase)
 
-
-    # =========================
-    # MAIN APP
-    # =========================
-    else:
+# =========================
+# MAIN APP
+# =========================
+else:
 
     st.sidebar.write(f"👤 {st.session_state.username}")
     st.sidebar.markdown("---")
 
-    # 🔄 FETCH USER DATA
     user_data = supabase.table("users").select("*").eq(
         "email", st.session_state.username
     ).execute()
@@ -103,9 +97,7 @@
     st.session_state.user_role = user_role
     st.session_state.usage_count = usage_count
 
-    # =========================
-    # ROLE UI
-    # =========================
+    # ROLE
     if user_role == "admin":
         st.sidebar.success("👑 Admin")
     elif user_role == "pro":
@@ -113,9 +105,7 @@
     else:
         st.sidebar.info("👤 Free User")
 
-    # =========================
     # USAGE
-    # =========================
     st.sidebar.markdown("### 📊 Usage")
 
     if user_role == "user":
@@ -123,9 +113,7 @@
     else:
         st.sidebar.write("Unlimited 🚀")
 
-    # =========================
-    # UPGRADE BUTTON
-    # =========================
+    # UPGRADE
     if user_role == "user":
 
         st.sidebar.markdown("---")
@@ -151,35 +139,26 @@
             """,
             unsafe_allow_html=True
         )
-
     else:
         st.sidebar.success("🎉 You are already Pro!")
 
-    # =========================
     # MENU
-    # =========================
     if user_role == "admin":
         page = st.sidebar.radio("Menu", ["Analyze", "History", "Admin"])
     else:
         page = st.sidebar.radio("Menu", ["Analyze", "History"])
 
-    # =========================
     # LOGOUT
-    # =========================
     if st.sidebar.button("Logout"):
         st.session_state.logged_in = False
         st.session_state.username = ""
         st.rerun()
 
-    # =========================
     # WARNING
-    # =========================
     if user_role == "user":
         st.warning("⚠️ **Free version: Upgrade to Pro for full features 💳**")
 
-    # =========================
     # PAGES
-    # =========================
     if page == "Analyze":
         analyze_page(client, supabase)
 
@@ -189,21 +168,20 @@
     elif page == "Admin":
         admin_page(supabase, st.session_state.username)
 
-
-    # =========================
-    # FOOTER
-    # =========================
-    st.markdown("""
-    <style>
-    .footer {
+# =========================
+# FOOTER
+# =========================
+st.markdown("""
+<style>
+.footer {
     position: fixed;
     bottom: 10px;
     left: 350px;
     width: 100%;
     color: gray;
-    }
-    </style>
-    <div class="footer">
-    © AI Oracle DBA Assistant 🚀
-    </div>
-    """, unsafe_allow_html=True)
+}
+</style>
+<div class="footer">
+© AI Oracle DBA Assistant 🚀
+</div>
+""", unsafe_allow_html=True)
