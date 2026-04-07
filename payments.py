@@ -16,7 +16,7 @@ def create_checkout_session(email):
 
             customer_email=email,
 
-            success_url=st.secrets["APP_URL"] + "?success=true",
+            success_url=f"{st.secrets['APP_URL']}?success=true&email={email}",
             cancel_url=st.secrets["APP_URL"] + "?canceled=true",
         )
 
