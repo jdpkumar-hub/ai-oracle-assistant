@@ -1,70 +1,48 @@
 import streamlit as st
 
-def analyze_page(client, supabase):
-
+def analyze_page():
     st.title("🔍 Analyze SQL")
 
-    user_email = st.session_state.get("username")
+    st.success("🎉 All features are FREE during beta launch!")
 
     # =========================
-    # FETCH USER DATA
+    # FILE UPLOAD (FREE)
     # =========================
-    user_data = supabase.table("users").select("*").eq(
-        "email", user_email
-    ).execute()
+    st.subheader("📂 Upload SQL File")
 
-    user = user_data.data[0] if user_data.data else {}
+    uploaded_file = st.file_uploader(
+        "Upload .sql / .txt / .csv file",
+        type=["sql", "txt", "csv"]
+    )
 
-    # ✅ SAFE DEFAULTS
-    user_role = user.get("role", "user")
-    usage_count = user.get("usage_count") or 0
+    query = ""
+
+    if uploaded_file:
+        content = uploaded_file.read().decode("utf-8")
+        st.success("✅ File uploaded!")
+
+        st.text_area("📄 File Content", content, height=200)
+        query = content
 
     # =========================
-    # LIMIT FREE USERS
+    # MANUAL INPUT
     # =========================
-    if user_role == "user" and usage_count >= 5:
-        st.error("🚫 Free limit reached. Upgrade to Pro.")
-        return
+    st.subheader("✍️ Enter Query")
+
+    user_input = st.text_area("Enter SQL query here")
+
+    if user_input:
+        query = user_input
 
     # =========================
-    # UI
+    # ANALYZE BUTTON
     # =========================
-    task = st.selectbox("Select Task", ["Query Optimization", "Explain Plan"])
+    if st.button("🚀 Analyze"):
+        if query:
+            st.info("🔍 Analyzing query...")
 
-    query = st.text_area("Enter your query:")
-
-    if st.button("Analyze"):
-
-        if not query.strip():
-            st.warning("Please enter a query")
-            return
-
-        # =========================
-        # OPENAI CALL
-        # =========================
-        with st.spinner("Analyzing..."):
-
-            try:
-                response = client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=[
-                        {"role": "system", "content": "You are an Oracle DBA expert."},
-                        {"role": "user", "content": query}
-                    ]
-                )
-
-                result = response.choices[0].message.content
-
-                st.success("✅ Analysis Complete")
-                st.write(result)
-
-                # =========================
-                # UPDATE USAGE
-                # =========================
-                if user_role == "user":
-                    supabase.table("users").update({
-                        "usage_count": usage_count + 1
-                    }).eq("email", user_email).execute()
-
-            except Exception as e:
-                st.error(f"Error: {e}")
+            # Dummy analysis (you can replace with AI later)
+            st.success("✅ Query looks good!")
+            st.write("💡 Suggestion: Add indexes for better performance.")
+        else:
+            st.warning("⚠️ Please enter or upload a query")
