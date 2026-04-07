@@ -13,9 +13,7 @@ import payments
 # =========================
 st.set_page_config(page_title="AI DBA Assistant", layout="wide")
 
-# Sidebar Branding
 st.sidebar.image("logo.png", use_container_width=True)
-st.sidebar.markdown("## AI DBA Assistant")
 st.sidebar.markdown("---")
 
 # =========================
@@ -29,7 +27,7 @@ supabase = create_client(
 )
 
 # =========================
-# SESSION
+# SESSION INIT
 # =========================
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
@@ -41,19 +39,28 @@ if "username" not in st.session_state:
     st.session_state.username = ""
 
 # =========================
-# HANDLE PAYMENT SUCCESS
+# 🔥 STRIPE SUCCESS HANDLER (BOLD MESSAGE)
 # =========================
 query_params = st.query_params
 
-if query_params.get("success") == "true" and st.session_state.logged_in:
-    st.success("Payment successful 🎉")
+if query_params.get("success") == "true":
 
-    supabase.table("users").update({
-        "role": "pro"
-    }).eq("email", st.session_state.username).execute()
+    st.success("🎉 **Payment Successful! Your account is upgraded to PRO 🚀**")
+
+    st.markdown("### 🔐 **Please login again to continue**")
+
+    # Clear params for clean UX
+    st.query_params.clear()
+
+    # Force logout
+    st.session_state.logged_in = False
+    st.session_state.username = ""
+
+    st.stop()
+
 
 # =========================
-# AUTH FLOW
+# AUTH SECTION
 # =========================
 if not st.session_state.logged_in:
 
@@ -74,6 +81,7 @@ if not st.session_state.logged_in:
     elif menu == "Reset Password":
         reset_password_request(supabase)
 
+
 # =========================
 # MAIN APP
 # =========================
@@ -82,18 +90,22 @@ else:
     st.sidebar.write(f"👤 {st.session_state.username}")
     st.sidebar.markdown("---")
 
-    # 🔐 Role fetch
-    try:
-        user_data = supabase.table("users").select("role").eq(
-            "email", st.session_state.username
-        ).execute()
+    # 🔄 FETCH USER DATA
+    user_data = supabase.table("users").select("*").eq(
+        "email", st.session_state.username
+    ).execute()
 
-        user_role = user_data.data[0]["role"] if user_data.data else "user"
+    user = user_data.data[0] if user_data.data else {}
 
-    except:
-        user_role = "user"
+    user_role = user.get("role", "user")
+    usage_count = user.get("usage_count", 0)
 
-    # 👑 Role display
+    st.session_state.user_role = user_role
+    st.session_state.usage_count = usage_count
+
+    # =========================
+    # ROLE UI
+    # =========================
     if user_role == "admin":
         st.sidebar.success("👑 Admin")
     elif user_role == "pro":
@@ -102,17 +114,46 @@ else:
         st.sidebar.info("👤 Free User")
 
     # =========================
-    # 💳 UPGRADE BUTTON (ONLY FREE USERS)
+    # USAGE
+    # =========================
+    st.sidebar.markdown("### 📊 Usage")
+
+    if user_role == "user":
+        st.sidebar.write(f"{usage_count} / 5 used")
+    else:
+        st.sidebar.write("Unlimited 🚀")
+
+    # =========================
+    # UPGRADE BUTTON
     # =========================
     if user_role == "user":
-        st.sidebar.markdown("---")
-        st.sidebar.subheader("💳 Upgrade")
 
-        if st.sidebar.button("🚀 Upgrade to Pro"):
-            checkout_url = payments.create_checkout_session(
-                st.session_state.username
-            )
-            st.markdown(f"[👉 Click here to Pay]({checkout_url})")
+        st.sidebar.markdown("---")
+
+        checkout_url = payments.create_checkout_session(
+            st.session_state.username
+        )
+
+        st.sidebar.markdown(
+            f"""
+            <a href="{checkout_url}" target="_self">
+                <button style="
+                    background-color:#ff4b4b;
+                    color:white;
+                    padding:10px 20px;
+                    border:none;
+                    border-radius:8px;
+                    font-size:16px;
+                    cursor:pointer;">
+                    🚀 Upgrade to Pro
+                </button>
+            </a>
+            """,
+            unsafe_allow_html=True
+        )
+
+    else:
+        st.sidebar.success("🎉 You are already Pro!")
 
     # =========================
     # MENU
@@ -131,22 +172,23 @@ else:
         st.rerun()
 
     # =========================
-    # PRO LOCK (OPTIONAL)
+    # WARNING
     # =========================
     if user_role == "user":
-        st.warning("⚠️ Free version: Upgrade to Pro for full features 💳")
+        st.warning("⚠️ **Free version: Upgrade to Pro for full features 💳**")
 
     # =========================
     # PAGES
     # =========================
     if page == "Analyze":
-        analyze_page(client)
+        analyze_page(client, supabase)
 
     elif page == "History":
         history_page()
 
     elif page == "Admin":
         admin_page(supabase, st.session_state.username)
+
 
 # =========================
 # FOOTER
@@ -159,11 +201,9 @@ st.markdown("""
     left: 350px;
     width: 100%;
     color: gray;
-    font-size: 16px;
 }
 </style>
-
 <div class="footer">
-© AI Oracle DBA Assistant | Built by Pradarshan Kumar JD 🚀
+© AI Oracle DBA Assistant 🚀
 </div>
 """, unsafe_allow_html=True)
