@@ -1,50 +1,121 @@
 import streamlit as st
-from auth import login, signup
+from openai import OpenAI
+from supabase import create_client
+
+from auth import login, signup, verify_otp, reset_password_request, reset_password_confirm
 from analyze import analyze_page
+from history import history_page
+from admin import admin_page
 
 # =========================
-# SESSION INIT
+# CONFIG
+# =========================
+st.set_page_config(page_title="AI DBA Assistant", layout="wide")
+
+# Sidebar
+st.sidebar.image("logo.png", use_container_width=True)
+st.sidebar.markdown("## AI DBA Assistant")
+st.sidebar.markdown("---")
+
+# =========================
+# SETUP
+# =========================
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+
+supabase = create_client(
+    st.secrets["SUPABASE_URL"],
+    st.secrets["SUPABASE_KEY"]
+)
+
+# =========================
+# SESSION
 # =========================
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-# =========================
-# SIDEBAR
-# =========================
-st.sidebar.title("🤖 AI Oracle DBA Assistant")
+if "history" not in st.session_state:
+    st.session_state.history = []
+
+if "username" not in st.session_state:
+    st.session_state.username = ""
 
 # =========================
-# NOT LOGGED IN
+# AUTH FLOW
 # =========================
 if not st.session_state.logged_in:
 
-    menu = st.sidebar.selectbox("Select", ["Login", "Signup"])
+    menu = st.sidebar.selectbox("Select", ["Login", "Sign Up", "Reset Password"])
 
-    if menu == "Login":
-        login()
-    else:
-        signup()
+    if st.session_state.get("show_otp"):
+        verify_otp(supabase)
+
+    elif st.session_state.get("show_reset_otp"):
+        reset_password_confirm(supabase)
+
+    elif menu == "Login":
+        login(supabase)
+
+    elif menu == "Sign Up":
+        signup(supabase)
+
+    elif menu == "Reset Password":
+        reset_password_request(supabase)
 
 # =========================
-# LOGGED IN
+# MAIN APP
 # =========================
 else:
-    st.sidebar.success(f"👤 {st.session_state.email}")
 
-    # 🚀 Upgrade Button (NO STRIPE)
-    if st.sidebar.button("🚀 Upgrade to Pro"):
-        st.warning("🚀 Premium features coming soon!")
-        st.info("🎁 For now, ALL features are FREE!")
+    st.sidebar.write(f"👤 {st.session_state.username}")
+    st.sidebar.markdown("---")
 
-    menu = st.sidebar.radio("Menu", ["Analyze", "History"])
+    # Role check
+    try:
+        user_data = supabase.table("users").select("role").eq(
+            "email", st.session_state.username
+        ).execute()
 
-    if menu == "Analyze":
-        analyze_page()
+        user_role = user_data.data[0]["role"] if user_data.data else "user"
+    except:
+        user_role = "user"
 
-    elif menu == "History":
-        st.title("📜 History")
-        st.info("Coming soon...")
+    if user_role == "admin":
+        st.sidebar.success("👑 Admin")
+        page = st.sidebar.radio("Menu", ["Analyze", "History", "Admin"])
+    else:
+        st.sidebar.info("👤 User")
+        page = st.sidebar.radio("Menu", ["Analyze", "History"])
 
     if st.sidebar.button("Logout"):
         st.session_state.logged_in = False
+        st.session_state.username = ""
         st.rerun()
+
+    if page == "Analyze":
+        analyze_page(client)
+
+    elif page == "History":
+        history_page()
+
+    elif page == "Admin":
+        admin_page(supabase, st.session_state.username)
+
+# =========================
+# FOOTER
+# =========================
+st.markdown("""
+<style>
+.footer {
+    position: fixed;
+    bottom: 10px;
+    left: 150px;
+    width: 100%;
+    color: gray;
+    font-size: 16px;
+}
+</style>
+
+<div class="footer">
+© AI Oracle DBA Assistant | Built by Pradarshan Kumar JD 🚀
+</div>
+""", unsafe_allow_html=True)
