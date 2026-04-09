@@ -2,7 +2,7 @@ import streamlit as st
 from openai import OpenAI
 from supabase import create_client
 
-from auth import login, signup, verify_otp, reset_password_request, reset_password_confirm
+from auth import login, signup, verify_otp, reset_password_request, reset_password_confirm, handle_google_login
 from analyze import analyze_page
 from history import history_page
 from admin import admin_page
@@ -42,6 +42,7 @@ if "username" not in st.session_state:
 # =========================
 # AUTH FLOW
 # =========================
+handle_google_login(supabase)   # ✅ MOVE HERE
 if not st.session_state.logged_in:
 
     menu = st.sidebar.selectbox("Select", ["Login", "Sign Up", "Reset Password"])
@@ -68,7 +69,7 @@ else:
 
     st.sidebar.write(f"👤 {st.session_state.username}")
     st.sidebar.markdown("---")
-
+    handle_google_login(supabase)
     # Role check
     try:
         user_data = supabase.table("users").select("role").eq(
