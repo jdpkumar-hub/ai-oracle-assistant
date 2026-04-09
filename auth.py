@@ -14,7 +14,7 @@ BASE_URL = os.getenv("APP_URL", "http://localhost:8501")
 # 🔵 GOOGLE LOGIN BUTTON
 # =========================
 def google_login_button():
-    url = f"{SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to={BASE_URL}"
+    url = f"{SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to={BASE_URL}&flow_type=pkce"
 
     st.markdown(f"""
     <a href="{url}">
@@ -34,34 +34,64 @@ def google_login_button():
     </a>
     """, unsafe_allow_html=True)
 
-
 # =========================
 # 🔵 HANDLE GOOGLE LOGIN
 # =========================
 def handle_google_login(supabase):
     try:
-        session = supabase.auth.get_session()
+        # 🔥 Step 1: extract token from URL
+        extract_token_from_url()
 
-        if session and session.user:
-            email = session.user.email
+        # 🔥 Step 2: read token
+        query_params = st.query_params
+        token = query_params.get("token")
 
-            result = supabase.table("users").select("*").eq("email", email).execute()
+        if token:
+            user = supabase.auth.get_user(token)
 
-            if not result.data:
-                supabase.table("users").insert({
-                    "email": email,
-                    "password": "google_oauth",
-                    "first_name": session.user.user_metadata.get("full_name", ""),
-                    "last_name": ""
-                }).execute()
+            if user and user.user:
+                email = user.user.email
 
-            st.session_state.logged_in = True
-            st.session_state.username = email
+                result = supabase.table("users").select("*").eq("email", email).execute()
 
-            st.rerun()  # ✅ critical
+                if not result.data:
+                    supabase.table("users").insert({
+                        "email": email,
+                        "password": "google_oauth",
+                        "first_name": user.user.user_metadata.get("full_name", ""),
+                        "last_name": ""
+                    }).execute()
 
-    except:
+                st.session_state.logged_in = True
+                st.session_state.username = email
+
+                # 🔥 clear token from URL
+                st.query_params.clear()
+
+                st.rerun()
+
+    except Exception as e:
         pass
+
+
+# =========================
+# 📧 ADD TOKEN EXTRACTOR
+# =========================
+def extract_token_from_url():
+    st.markdown("""
+    <script>
+    const hash = window.location.hash;
+    if (hash && hash.includes("access_token")) {
+        const params = new URLSearchParams(hash.substring(1));
+        const token = params.get("access_token");
+
+        if (token) {
+            window.location.href = window.location.pathname + "?token=" + token;
+        }
+    }
+    </script>
+    """, unsafe_allow_html=True)
+
 
 
 # =========================
