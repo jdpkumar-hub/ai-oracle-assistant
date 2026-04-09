@@ -12,9 +12,9 @@ SUPABASE_URL = "https://wequqsbvhydvugifevhm.supabase.co"
 # 🔵 GOOGLE LOGIN BUTTON
 # =========================
 def google_login_button():
-    params = {"provider": "google"}
-    url = f"{SUPABASE_URL}/auth/v1/authorize?{urlencode(params)}"
-
+    url = f"{SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=https://ai-oracle-assistant.streamlit.app"
+    st.markdown(f"[🔵 Continue with Google]({url})")
+    
     st.markdown(f"""
     <a href="{url}">
     <div style="
