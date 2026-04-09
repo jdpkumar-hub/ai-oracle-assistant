@@ -8,21 +8,20 @@ from auth import (
     verify_otp,
     reset_password_request,
     reset_password_confirm
-    #handle_google_login
 )
 
 from analyze import analyze_page
 from history import history_page
 from admin import admin_page
 
+# =========================
+# PAGE CONFIG
+# =========================
 st.set_page_config(page_title="AI DBA Assistant", layout="wide")
 
-# Sidebar
-st.sidebar.image("logo.png", use_container_width=True)
-st.sidebar.markdown("## AI DBA Assistant")
-st.sidebar.markdown("---")
-
-# Setup
+# =========================
+# SETUP
+# =========================
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 supabase = create_client(
@@ -30,10 +29,43 @@ supabase = create_client(
     st.secrets["SUPABASE_KEY"]
 )
 
-# 🔥 GOOGLE HANDLER (TOP LEVEL)
-# handle_google_login(supabase)   # 🔴 Disabled Google auth
+# =========================
+# 🔥 AUTO LOGIN FROM REACT TOKEN (FINAL FIX)
+# =========================
+query_params = st.query_params
+token = query_params.get("token")
 
-# Session init
+# ✅ Fix: handle list
+if isinstance(token, list):
+    token = token[0]
+
+# 🔍 DEBUG (remove later if needed)
+st.write("TOKEN DEBUG:", token)
+
+if token:
+    try:
+        # ✅ Correct Supabase call
+        user = supabase.auth.get_user(jwt=token)
+
+        st.write("USER DEBUG:", user)
+
+        if user and user.user:
+            st.session_state.logged_in = True
+            st.session_state.username = user.user.email
+
+            # ✅ Clean URL
+            st.query_params.clear()
+
+            st.success("Auto Login Success ✅")
+
+            st.rerun()
+
+    except Exception as e:
+        st.error(f"Token Error: {e}")
+
+# =========================
+# SESSION INIT
+# =========================
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
@@ -43,6 +75,12 @@ if "username" not in st.session_state:
 if "page" not in st.session_state:
     st.session_state.page = "Analyze"
 
+# =========================
+# SIDEBAR
+# =========================
+st.sidebar.image("logo.png", use_container_width=True)
+st.sidebar.markdown("## AI DBA Assistant")
+st.sidebar.markdown("---")
 
 # =========================
 # AUTH FLOW
