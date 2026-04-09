@@ -7,8 +7,8 @@ from auth import (
     signup,
     verify_otp,
     reset_password_request,
-    reset_password_confirm,
-    handle_google_login
+    reset_password_confirm
+    #handle_google_login
 )
 
 from analyze import analyze_page
