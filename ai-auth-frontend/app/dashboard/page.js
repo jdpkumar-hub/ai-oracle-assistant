@@ -1,34 +1,37 @@
 "use client";
 
+import { useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 
-export default function Home() {
+export default function Dashboard() {
 
-  const loginWithGoogle = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        // 🔥 THIS IS CRITICAL
-        redirectTo: "http://localhost:3000/dashboard"
+  useEffect(() => {
+
+    // 🔥 THIS IS THE FIX
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+
+        console.log("EVENT:", event);
+        console.log("SESSION:", session);
+
+        if (session) {
+          const token = session.access_token;
+
+          // 🚀 redirect to Streamlit
+          window.location.href = `https://ai-oracle-assistant.streamlit.app?token=${token}`;
+        }
       }
-    });
-  };
+    );
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+
+  }, []);
 
   return (
     <div style={{ textAlign: "center", marginTop: "100px" }}>
-      <h1>AI DBA Assistant</h1>
-
-      <button
-        onClick={loginWithGoogle}
-        style={{
-          padding: "12px 20px",
-          borderRadius: "8px",
-          border: "1px solid #ddd",
-          cursor: "pointer"
-        }}
-      >
-        🔵 Continue with Google
-      </button>
+      <h2>Logging you in... 🚀</h2>
     </div>
   );
 }
