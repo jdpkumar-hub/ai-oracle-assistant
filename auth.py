@@ -1,136 +1,79 @@
 import streamlit as st
 from supabase_client import supabase
 
-# ================================
-# 🔐 GOOGLE LOGIN FUNCTION
-# ================================
+# =========================
+# GOOGLE LOGIN
+# =========================
 def google_login():
-    try:
-        res = supabase.auth.sign_in_with_oauth({
-            "provider": "google",
-            "options": {
-                "redirect_to": "https://ai-oracle-assistant.streamlit.app"
-            }
-        })
+    res = supabase.auth.sign_in_with_oauth({
+        "provider": "google",
+        "options": {
+            "redirect_to": "https://ai-oracle-assistant.streamlit.app"
+        }
+    })
 
-        # 🧪 DEBUG (IMPORTANT)
-        st.write("🔍 OAuth Response:", res)
-
-        # ✅ Handle all cases
-        if hasattr(res, "url"):
-            return res.url
-
-        elif isinstance(res, dict) and "url" in res:
-            return res["url"]
-
-        else:
-            st.error("❌ OAuth URL not found in response")
-            return None
-
-    except Exception as e:
-        st.error(f"❌ Google Login Error: {e}")
-        return None
+    return res.url
 
 
-# ================================
-# 🔐 HANDLE LOGIN SESSION
-# ================================
+# =========================
+# SESSION HANDLER
+# =========================
 def handle_session():
-    try:
-        session = supabase.auth.get_session()
+    session = supabase.auth.get_session()
 
-        if session and session.session:
-            user = session.session.user
+    if session and session.session:
+        st.session_state["user"] = session.session.user
+        st.session_state["logged_in"] = True
+        return True
 
-            st.session_state["user"] = user
-            st.session_state["logged_in"] = True
-
-            return True
-
-        return False
-
-    except Exception as e:
-        st.error(f"Session Error: {e}")
-        return False
+    return False
 
 
-# ================================
-# 🔐 LOGOUT
-# ================================
-def logout():
-    try:
-        supabase.auth.sign_out()
-        st.session_state.clear()
-        st.rerun()
-    except Exception as e:
-        st.error(f"Logout Error: {e}")
-
-
-# ================================
-# 🎯 MAIN LOGIN UI (PRO UX)
-# ================================
+# =========================
+# LOGIN UI
+# =========================
 def login():
 
     st.markdown("## 🔐 Login")
-    st.write("### Continue with Google")
 
-    # 🧠 PRO UX TIP: Keep state
     if "logged_in" not in st.session_state:
         st.session_state["logged_in"] = False
 
-    # ======================
-    # 🔁 HANDLE RETURN LOGIN
-    # ======================
+    # Already logged in
     if handle_session():
-        st.success("✅ You are logged in")
+        st.success("✅ Logged in")
         return
 
-    # ======================
-    # 🔘 LOGIN BUTTON
-    # ======================
+    # Login button
     if st.button("🔵 Continue with Google"):
-
-        with st.spinner("Redirecting to Google..."):
-            url = google_login()
-
-        if url:
-            st.success("✅ Login URL generated")
-
-            # 🧪 SHOW DEBUG URL
-            st.write("🔗 OAuth URL:", url)
-
-            # 🔥 PRO UX: Clickable link
-            st.markdown(f"""
-            ### 👉 Click below if auto redirect doesn't happen:
-            [🚀 Continue to Google Login]({url})
-            """, unsafe_allow_html=True)
-
-        else:
-            st.error("❌ Failed to generate login URL")
-
-    # ======================
-    # ℹ️ HELP MESSAGE
-    # ======================
-    st.info("Login using Google to access AI DBA Assistant")
+        url = google_login()
+        st.markdown(f"[👉 Click to Login]({url})")
 
 
-# ================================
-# 🔐 REQUIRE LOGIN (FOR OTHER PAGES)
-# ================================
+# =========================
+# REQUIRE LOGIN
+# =========================
 def require_login():
-    if "logged_in" not in st.session_state or not st.session_state["logged_in"]:
+    if not st.session_state.get("logged_in"):
         login()
         st.stop()
 
 
-# ================================
-# 👤 SHOW USER INFO (SIDEBAR)
-# ================================
+# =========================
+# LOGOUT
+# =========================
+def logout():
+    supabase.auth.sign_out()
+    st.session_state.clear()
+    st.rerun()
+
+
+# =========================
+# USER SIDEBAR
+# =========================
 def show_user():
     if "user" in st.session_state:
-        user = st.session_state["user"]
-
-        st.sidebar.success(f"👤 {user.email}")
+        st.sidebar.success(f"👤 {st.session_state['user'].email}")
 
         if st.sidebar.button("Logout"):
             logout()
