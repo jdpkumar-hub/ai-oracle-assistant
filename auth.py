@@ -12,23 +12,23 @@ def login(supabase):
     # ----------------------------
     st.markdown("### Continue with Google")
 
-    st.markdown(
-        """
-        <a href="https://ai-auth-frontend-nine.vercel.app">
-            <button style="
-                width: 100%;
-                padding: 12px;
-                background-color: white;
-                border: 1px solid #ddd;
-                border-radius: 8px;
-                font-size: 16px;
-                cursor: pointer;">
-                🔵 Continue with Google
-            </button>
-        </a>
-        """,
-        unsafe_allow_html=True
-    )
+   st.markdown(
+    """
+    <a href="https://ai-auth-frontend-nine.vercel.app" target="_blank">
+        <button style="
+            width: 100%;
+            padding: 12px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;">
+            🔵 Continue with Google
+        </button>
+    </a>
+    """,
+    unsafe_allow_html=True
+)
 
     st.markdown("---")
 
