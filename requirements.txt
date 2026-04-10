@@ -1,5 +1,5 @@
 streamlit
 openai
 oracledb
-bcrypt
 supabase
+pandas

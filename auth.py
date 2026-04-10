@@ -8,7 +8,7 @@ def login():
         """
         <a href="https://ai-auth-frontend-nine.vercel.app">
             <button style="
-                padding:10px;
+                padding:12px;
                 border-radius:8px;
                 border:none;
                 background-color:#4285F4;
@@ -23,10 +23,4 @@ def login():
     )
 
     st.markdown("---")
-    st.markdown("### Or login with Email")
-
-    email = st.text_input("Email")
-    password = st.text_input("Password", type="password")
-
-    if st.button("Login"):
-        st.success("Login logic here")
+    st.info("Login using Google to access AI DBA Assistant")
