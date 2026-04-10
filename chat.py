@@ -1,49 +1,51 @@
 import streamlit as st
 from openai import OpenAI
 
-# DEBUG check
-if "OPENAI_API_KEY" not in st.secrets:
-    st.error("❌ OpenAI API Key missing")
-    st.stop()
+def chat_ui():
 
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+    # Check API key
+    if "OPENAI_API_KEY" not in st.secrets:
+        st.error("❌ OpenAI API Key missing")
+        return
 
-st.title("🤖 AI DBA Assistant")
+    client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+    st.title("🤖 AI DBA Assistant")
 
-# Show history
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.write(msg["content"])
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
 
-prompt = st.chat_input("Ask database question...")
+    # Show chat history
+    for msg in st.session_state.messages:
+        with st.chat_message(msg["role"]):
+            st.write(msg["content"])
 
-if prompt:
-    st.session_state.messages.append({"role": "user", "content": prompt})
+    prompt = st.chat_input("Ask database question...")
 
-    with st.chat_message("user"):
-        st.write(prompt)
+    if prompt:
+        st.session_state.messages.append({"role": "user", "content": prompt})
 
-    try:
-        with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
+        with st.chat_message("user"):
+            st.write(prompt)
 
-                response = client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=[
-                        {
-                            "role": "system",
-                            "content": "You are an Oracle DBA expert."
-                        }
-                    ] + st.session_state.messages
-                )
+        try:
+            with st.chat_message("assistant"):
+                with st.spinner("Thinking..."):
 
-                reply = response.choices[0].message.content
-                st.write(reply)
+                    response = client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=[
+                            {
+                                "role": "system",
+                                "content": "You are an Oracle DBA expert."
+                            }
+                        ] + st.session_state.messages
+                    )
 
-        st.session_state.messages.append({"role": "assistant", "content": reply})
+                    reply = response.choices[0].message.content
+                    st.write(reply)
 
-    except Exception as e:
-        st.error(f"❌ Error: {str(e)}")
+            st.session_state.messages.append({"role": "assistant", "content": reply})
+
+        except Exception as e:
+            st.error(f"❌ Error: {str(e)}")
