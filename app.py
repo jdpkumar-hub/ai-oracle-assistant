@@ -40,14 +40,14 @@ if isinstance(token, list):
     token = token[0]
 
 # 🔍 DEBUG (remove later if needed)
-st.write("TOKEN DEBUG:", token)
+# st.write("TOKEN DEBUG:", token)
 
 if token:
     try:
         # ✅ Correct Supabase call
         user = supabase.auth.get_user(jwt=token)
 
-        st.write("USER DEBUG:", user)
+        # st.write("USER DEBUG:", user)
 
         if user and user.user:
             st.session_state.logged_in = True
