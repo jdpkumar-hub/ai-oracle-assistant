@@ -2,8 +2,22 @@ import streamlit as st
 from auth import login, logout, get_user, supabase
 import os
 from openai import OpenAI
+import pandas as pd
+from reportlab.platypus import SimpleDocTemplate, Paragraph
+from reportlab.lib.styles import getSampleStyleSheet
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+#-----------------------------------------------------
+# DOWNLOAD REPORT
+#-----------------------------------------------------
+def create_pdf(text):
+    file_path = "/mnt/data/report.pdf"
+    doc = SimpleDocTemplate(file_path)
+    styles = getSampleStyleSheet()
+    story = [Paragraph(text, styles["Normal"])]
+    doc.build(story)
+    return file_path
 
 # -------------------------------
 # ⚙️ PAGE CONFIG
@@ -43,18 +57,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -------------------------------
-# 🔐 HANDLE OAUTH
-# -------------------------------
-params = st.query_params
-if "code" in params:
-    try:
-        supabase.auth.exchange_code_for_session({"auth_code": params["code"]})
-        st.query_params.clear()
-        st.rerun()
-    except Exception as e:
-        st.error(f"Login failed: {e}")
-
-# -------------------------------
 # USER CHECK
 # -------------------------------
 user = get_user()
@@ -65,7 +67,7 @@ if not user:
     col1, col2 = st.columns([1, 3])
 
     with col1:
-        st.image("logo2.png", width=220)
+        st.image("image/logo2.png", width=220)
         st.markdown("## AI DBA Assistant")
         st.caption("🚀 Smart Oracle Optimization Platform")
 
@@ -120,14 +122,37 @@ with st.sidebar:
 
 # ================= PAGES =================
 if page == "🏠 Dashboard":
-    st.title("Dashboard")
+    st.title("📊 Dashboard")
+
+    try:
+        data = supabase.table("query_history")\
+            .select("*")\
+            .eq("user_email", user.email)\
+            .execute()
+
+        df = pd.DataFrame(data.data)
+
+        if not df.empty:
+            st.metric("Total Queries", len(df))
+
+            df["created_at"] = pd.to_datetime(df["created_at"])
+            df["date"] = df["created_at"].dt.date
+            daily = df.groupby("date").size()
+
+            st.subheader("📈 Queries per Day")
+            st.line_chart(daily)
+        else:
+            st.info("No data yet")
+
+    except Exception:
+        st.error("Error loading dashboard")
 
 elif page == "💬 AI Chat":
     st.title("AI DBA Assistant")
 
     tab1, tab2, tab3 = st.tabs(["💬 Chat", "⚡ SQL Analyzer", "📊 AWR Analyzer"])
 
-    # ---------------- CHAT ----------------
+    # CHAT
     with tab1:
         question = st.text_input("Ask anything...")
 
@@ -143,17 +168,21 @@ elif page == "💬 AI Chat":
                 answer = response.choices[0].message.content
                 st.write(answer)
 
-                # 💾 SAVE TO HISTORY
+                # ✅ FIXED INDENTATION
+                pdf_file = create_pdf(answer)
+                with open(pdf_file, "rb") as f:
+                    st.download_button("📄 Download Report", f, file_name="report.pdf")
+
                 try:
                     supabase.table("query_history").insert({
                         "user_email": user.email,
                         "question": question,
                         "response": answer
                     }).execute()
-                except Exception:
+                except:
                     st.warning("History not saved")
 
-    # ---------------- SQL ANALYZER ----------------
+    # SQL
     with tab2:
         sql = st.text_area("Paste SQL")
 
@@ -170,7 +199,11 @@ elif page == "💬 AI Chat":
                     answer = response.choices[0].message.content
                     st.write(answer)
 
-                    # 💾 SAVE SQL ANALYSIS
+                    # ✅ FIXED INDENTATION
+                    pdf_file = create_pdf(answer)
+                    with open(pdf_file, "rb") as f:
+                        st.download_button("📄 Download Report", f, file_name="report.pdf")
+
                     try:
                         supabase.table("query_history").insert({
                             "user_email": user.email,
@@ -180,7 +213,7 @@ elif page == "💬 AI Chat":
                     except:
                         st.warning("History not saved")
 
-    # ---------------- AWR ANALYZER ----------------
+    # AWR (unchanged)
     with tab3:
         st.markdown("### 📊 AWR Report Analyzer")
 
@@ -192,32 +225,20 @@ elif page == "💬 AI Chat":
             if st.button("Analyze AWR"):
                 with st.spinner("Analyzing AWR Report..."):
                     try:
-                        prompt = f"""
-Analyze this Oracle AWR report and provide:
-
-1. Top performance issues
-2. CPU / IO bottlenecks
-3. Slow SQL insights
-4. Recommendations
-
-AWR Report:
-{content[:15000]}
-"""
+                        prompt = f"""Analyze this Oracle AWR report:
+{content[:15000]}"""
 
                         response = client.chat.completions.create(
                             model="gpt-4o-mini",
                             messages=[
-                                {"role": "system", "content": "You are an Oracle performance expert analyzing AWR reports."},
+                                {"role": "system", "content": "Oracle performance expert"},
                                 {"role": "user", "content": prompt}
                             ]
                         )
 
                         result = response.choices[0].message.content
-
-                        st.markdown("## 📊 AWR Analysis Report")
                         st.write(result)
 
-                        # 💾 SAVE AWR ANALYSIS
                         try:
                             supabase.table("query_history").insert({
                                 "user_email": user.email,
@@ -231,7 +252,9 @@ AWR Report:
                         st.error(f"AWR Error: {e}")
 
 elif page == "📜 History":
-    st.title("Query History")
+    st.title("📜 Query History")
+
+    search = st.text_input("🔍 Search")
 
     data = supabase.table("query_history")\
         .select("*")\
@@ -239,10 +262,14 @@ elif page == "📜 History":
         .order("created_at", desc=True)\
         .execute()
 
-    for row in data.data:
-        st.markdown(f"**Q:** {row['question']}")
-        st.markdown(f"**A:** {row['response']}")
-        st.divider()
+    results = data.data
+
+    if search:
+        results = [r for r in results if search.lower() in r["question"].lower()]
+
+    for row in results:
+        with st.expander(f"🧠 {row['question'][:50]}"):
+            st.markdown(f"**Answer:** {row['response']}")
 
 elif page == "📊 Reports":
     st.title("Reports")
