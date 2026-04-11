@@ -19,10 +19,7 @@ st.set_page_config(
 # -------------------------------
 st.markdown("""
 <style>
-.block-container {
-    padding-top: 1rem;
-    padding-bottom: 1rem;
-}
+.block-container { padding-top: 1rem; }
 
 .card {
     background-color: white;
@@ -31,9 +28,7 @@ st.markdown("""
     box-shadow: 0px 8px 24px rgba(0,0,0,0.08);
 }
 
-.right-panel {
-    margin-top: 40px;
-}
+.right-panel { margin-top: 40px; }
 
 .feature {
     padding: 12px;
@@ -48,10 +43,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -------------------------------
-# 🔐 HANDLE OAUTH CODE
+# 🔐 HANDLE OAUTH
 # -------------------------------
 params = st.query_params
-
 if "code" in params:
     try:
         supabase.auth.exchange_code_for_session({"auth_code": params["code"]})
@@ -61,31 +55,27 @@ if "code" in params:
         st.error(f"Login failed: {e}")
 
 # -------------------------------
-# 🔐 CHECK USER
+# USER CHECK
 # -------------------------------
 user = get_user()
 
-# =========================================================
-# 🔐 LOGIN PAGE
-# =========================================================
+# ================= LOGIN =================
 if not user:
 
     col1, col2 = st.columns([1, 3])
 
-    # LEFT PANEL
     with col1:
         st.image("logo2.png", width=220)
         st.markdown("## AI DBA Assistant")
         st.caption("🚀 Smart Oracle Optimization Platform")
 
         st.markdown("""
-<div class="feature">⚡ <b>SQL Performance Tuning</b><br><small>Optimize slow queries</small></div>
-<div class="feature">📊 <b>AWR Analysis</b><br><small>Analyze workload reports</small></div>
-<div class="feature">🤖 <b>AI Recommendations</b><br><small>Smart tuning suggestions</small></div>
-<div class="feature">🚀 <b>Real-time Insights</b><br><small>Live monitoring</small></div>
+<div class="feature">⚡ SQL Performance Tuning</div>
+<div class="feature">📊 AWR Analysis</div>
+<div class="feature">🤖 AI Recommendations</div>
+<div class="feature">🚀 Real-time Insights</div>
 """, unsafe_allow_html=True)
 
-    # RIGHT PANEL
     with col2:
         st.markdown('<div class="right-panel">', unsafe_allow_html=True)
         st.markdown('<div class="card">', unsafe_allow_html=True)
@@ -96,169 +86,121 @@ if not user:
             login()
 
         with tab2:
-            email = st.text_input("Email", key="signup_email")
-            password = st.text_input("Password", type="password", key="signup_pass")
+            email = st.text_input("Email")
+            password = st.text_input("Password", type="password")
 
             if st.button("Create Account"):
                 try:
-                    supabase.auth.sign_up({
-                        "email": email,
-                        "password": password
-                    })
-                    st.success("✅ Account created! Please login.")
+                    supabase.auth.sign_up({"email": email, "password": password})
+                    st.success("Account created")
                 except Exception as e:
-                    st.error(f"Error: {e}")
+                    st.error(e)
 
         with tab3:
-            email = st.text_input("Enter your email", key="reset_email")
+            email = st.text_input("Reset Email")
 
-            if st.button("Send Reset Link"):
+            if st.button("Send Reset"):
                 try:
                     supabase.auth.reset_password_email(email)
-                    st.success("📧 Reset link sent")
+                    st.success("Email sent")
                 except Exception as e:
-                    st.error(f"Error: {e}")
+                    st.error(e)
 
         st.markdown('</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
     st.stop()
 
-# =========================================================
-# 🎯 MAIN APP
-# =========================================================
-
+# ================= MAIN =================
 with st.sidebar:
-    col1, col2 = st.columns([1, 2])
-
-    with col1:
-        st.image("logo.png", width=60)
-
-    with col2:
-        st.markdown("### AI DBA")
-        st.caption("Smart Optimization")
-
-    st.divider()
-
+    st.image("logo.png", width=60)
     page = st.radio("", ["🏠 Dashboard", "💬 AI Chat", "📊 Reports", "⚙️ Settings"])
-
-    st.divider()
-    st.markdown("### 👤 User")
     st.success(user.email)
-
     logout()
 
-# -------------------------------
-# MAIN CONTENT
-# -------------------------------
-
+# ================= PAGES =================
 if page == "🏠 Dashboard":
-    st.markdown("## 🏠 Dashboard")
-    st.info("Welcome to AI DBA Assistant 🚀")
+    st.title("Dashboard")
 
-#elif page == "💬 AI Chat":
-#    st.markdown("## 💬 AI DBA Chat")
-#
-#    question = st.text_input("Ask Oracle question...")
-#
-#    if question:
-#        with st.spinner("Analyzing..."):
-#            try:
-#                response = client.chat.completions.create(
-#                    model="gpt-4o-mini",
-#                    messages=[
-#                        {"role": "system", "content": "You are an Oracle DBA expert."},
-#                        {"role": "user", "content": question}
-#                    ]
-#                )
-#
-#                answer = response.choices[0].message.content
-#
-#                st.markdown("### 🤖 AI Response")
-#                st.write(answer)
-#
-#            except Exception as e:
-#                st.error(f"AI Error: {e}")
-#===============================================
-#AI CHAT START
-#===============================================
 elif page == "💬 AI Chat":
-    st.markdown("## 💬 AI DBA Assistant")
+    st.title("AI DBA Assistant")
 
-    tab1, tab2 = st.tabs(["💬 Ask AI", "⚡ SQL Analyzer"])
+    tab1, tab2, tab3 = st.tabs(["💬 Chat", "⚡ SQL Analyzer", "📊 AWR Analyzer"])
 
-    # =========================
-    # 💬 CHAT TAB
-    # =========================
+    # CHAT
     with tab1:
-        question = st.text_input("Ask Oracle DBA question...")
+        question = st.text_input("Ask anything...")
 
         if question:
-            with st.spinner("Analyzing..."):
-                try:
+            with st.spinner("Thinking..."):
+                response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": "Oracle DBA expert"},
+                        {"role": "user", "content": question}
+                    ]
+                )
+                st.write(response.choices[0].message.content)
+
+    # SQL ANALYZER
+    with tab2:
+        sql = st.text_area("Paste SQL")
+
+        if st.button("Analyze"):
+            if sql:
+                with st.spinner("Analyzing..."):
                     response = client.chat.completions.create(
                         model="gpt-4o-mini",
                         messages=[
-                            {"role": "system", "content": "You are an expert Oracle DBA helping with performance tuning."},
-                            {"role": "user", "content": question}
+                            {"role": "system", "content": "SQL tuning expert"},
+                            {"role": "user", "content": sql}
+                        ]
+                    )
+                    st.write(response.choices[0].message.content)
+# =========================
+# 📊 AWR ANALYZER
+# =========================
+with tab3:
+    st.markdown("### 📊 AWR Report Analyzer")
+
+    uploaded_file = st.file_uploader("Upload AWR report (.txt)", type=["txt"])
+
+    if uploaded_file:
+        content = uploaded_file.read().decode("utf-8")
+
+        if st.button("Analyze AWR"):
+            with st.spinner("Analyzing AWR Report..."):
+                try:
+                    prompt = f"""
+Analyze this Oracle AWR report and provide:
+
+1. Top performance issues
+2. CPU / IO bottlenecks
+3. Slow SQL insights
+4. Recommendations
+
+AWR Report:
+{content[:15000]}
+"""
+
+                    response = client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=[
+                            {"role": "system", "content": "You are an Oracle performance expert analyzing AWR reports."},
+                            {"role": "user", "content": prompt}
                         ]
                     )
 
-                    answer = response.choices[0].message.content
+                    result = response.choices[0].message.content
 
-                    st.markdown("### 🤖 AI Response")
-                    st.write(answer)
+                    st.markdown("## 📊 AWR Analysis Report")
+                    st.write(result)
 
                 except Exception as e:
-                    st.error(f"AI Error: {e}")
-
-    # =========================
-    # ⚡ SQL ANALYZER TAB
-    # =========================
-    with tab2:
-        st.markdown("### ⚡ SQL Performance Analyzer")
-
-        sql_query = st.text_area("Paste your SQL query here", height=150)
-
-        if st.button("Analyze SQL"):
-            if sql_query:
-                with st.spinner("Analyzing SQL..."):
-                    try:
-                        prompt = f"""
-Analyze this Oracle SQL query and provide:
-
-1. Issues in query
-2. Performance problems
-3. Index suggestions
-4. Optimized query rewrite
-
-SQL:
-{sql_query}
-"""
-
-                        response = client.chat.completions.create(
-                            model="gpt-4o-mini",
-                            messages=[
-                                {"role": "system", "content": "You are an Oracle SQL tuning expert."},
-                                {"role": "user", "content": prompt}
-                            ]
-                        )
-
-                        result = response.choices[0].message.content
-
-                        st.markdown("## 🔍 SQL Analysis Report")
-                        st.write(result)
-
-                    except Exception as e:
-                        st.error(f"AI Error: {e}")
-
-#===============================================
-#AI CHAT END
-#===============================================
+                    st.error(f"AWR Error: {e}")
+                    
 elif page == "📊 Reports":
-    st.markdown("## 📊 Reports")
-    st.info("Reports module coming soon")
+    st.title("Reports")
 
 elif page == "⚙️ Settings":
-    st.markdown("## ⚙️ Settings")
-    st.info("Settings panel")
+    st.title("Settings")
