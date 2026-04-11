@@ -62,23 +62,46 @@ if not user:
     col1, col2 = st.columns([1, 3])
 
     # -------- LEFT PANEL --------
-    with col1:
-        st.markdown('<div class="left-panel">', unsafe_allow_html=True)
+ #   with col1:
+#        st.markdown('<div class="left-panel">', unsafe_allow_html=True)
+#       st.image("logo2.png", width=220)
+#        st.markdown("## AI DBA Assistant")
+#       st.caption("🚀 Smart Oracle Optimization Platform")
 
-        st.image("logo2.png", width=220)
-        st.markdown("## AI DBA Assistant")
-        st.caption("🚀 Smart Oracle Optimization Platform")
-
-        st.markdown("""
+ #       st.markdown("""
 ### Features
-- ⚡ SQL Performance Tuning
-- 📊 AWR Analysis
-- 🤖 AI Recommendations
-- 🚀 Real-time Insights
-""")
+#- ⚡ SQL Performance Tuning
+#- 📊 AWR Analysis
+#- 🤖 AI Recommendations
+#- 🚀 Real-time Insights
+#""")
 
-        st.markdown('</div>', unsafe_allow_html=True)
+#        st.markdown('</div>', unsafe_allow_html=True)
+with col1:
+    st.image("logo2.png", width=120)
+    st.markdown("## AI DBA Assistant")
+    st.caption("🚀 Smart Oracle Optimization Platform")
 
+    st.markdown("""
+<style>
+.feature {
+    padding: 12px;
+    border-radius: 12px;
+    transition: 0.3s;
+}
+.feature:hover {
+    background-color: #f5f7ff;
+    transform: translateX(5px);
+}
+</style>
+""", unsafe_allow_html=True)
+
+    st.markdown("""
+<div class="feature">⚡ <b>SQL Performance Tuning</b><br><small>Optimize slow queries and execution plans</small></div>
+<div class="feature">📊 <b>AWR Analysis</b><br><small>Analyze database workload reports</small></div>
+<div class="feature">🤖 <b>AI Recommendations</b><br><small>Smart tuning suggestions using AI</small></div>
+<div class="feature">🚀 <b>Real-time Insights</b><br><small>Monitor database performance live</small></div>
+""", unsafe_allow_html=True)
     # -------- RIGHT PANEL --------
     with col2:
         st.markdown('<div class="right-panel">', unsafe_allow_html=True)
