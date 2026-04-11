@@ -180,7 +180,7 @@ if page == "🏠 Dashboard":
 #            except Exception as e:
 #                st.error(f"AI Error: {e}")
 #===============================================
-AI CHAT START
+#AI CHAT START
 #===============================================
 elif page == "💬 AI Chat":
     st.markdown("## 💬 AI DBA Assistant")
