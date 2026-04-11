@@ -16,13 +16,11 @@ st.set_page_config(
 st.markdown("""
 <style>
 
-/* Reduce top spacing */
 .block-container {
     padding-top: 1rem;
     padding-bottom: 1rem;
 }
 
-/* Left panel */
 .left-panel {
     background: linear-gradient(135deg, #e0ecff, #f0f6ff);
     padding: 40px;
@@ -30,7 +28,6 @@ st.markdown("""
     min-height: 500px;
 }
 
-/* Right panel */
 .card {
     background-color: white;
     padding: 25px;
@@ -38,7 +35,6 @@ st.markdown("""
     box-shadow: 0px 8px 24px rgba(0,0,0,0.08);
 }
 
-/* Move right panel closer */
 .right-panel {
     margin-left: -10px;
     margin-top: 40px;
@@ -91,12 +87,12 @@ if not user:
         st.markdown('</div>', unsafe_allow_html=True)
 
     # -------- RIGHT PANEL --------
-       with col2:
-            st.markdown('<div class="right-panel">', unsafe_allow_html=True)
-            st.write("")  # small vertical gap
-            st.markdown('<div class="card">', unsafe_allow_html=True)
+    with col2:
+        st.markdown('<div class="right-panel">', unsafe_allow_html=True)
+        st.write("")
+        st.markdown('<div class="card">', unsafe_allow_html=True)
 
-            tab1, tab2, tab3 = st.tabs(["🔐 Login", "🆕 Signup", "🔑 Reset"])
+        tab1, tab2, tab3 = st.tabs(["🔐 Login", "🆕 Signup", "🔑 Reset"])
 
         # LOGIN TAB
         with tab1:
