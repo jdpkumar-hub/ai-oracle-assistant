@@ -1,26 +1,45 @@
 import streamlit as st
 
+def handle_auth():
+    params = st.query_params
+
+    if "access_token" in params:
+        st.session_state["logged_in"] = True
+        st.session_state["access_token"] = params["access_token"]
+
+        # Clean URL (PRO UX)
+        st.query_params.clear()
+
+        st.success("✅ Login successful")
+        st.rerun()
+
+
 def login():
+    handle_auth()
+
+    if st.session_state.get("logged_in"):
+        return True
+
     st.title("🔐 Login")
 
-    st.markdown("### Continue with Google")
-    st.markdown(
-        """
-        <a href="https://ai-auth-frontend-nine.vercel.app">
+    # Redirect to your Vercel app
+    login_url = "https://ai-auth-frontend-nine.vercel.app"
+
+    st.markdown(f"""
+        <a href="{login_url}">
             <button style="
-                padding:12px;
+                padding:10px 20px;
                 border-radius:8px;
-                border:none;
-                background-color:#4285F4;
-                color:white;
-                font-size:16px;
-                cursor:pointer;">
+                cursor:pointer;
+            ">
                 🔵 Continue with Google
             </button>
         </a>
-        """,
-        unsafe_allow_html=True
-    )
+    """, unsafe_allow_html=True)
 
-    st.markdown("---")
-    st.info("Login using Google to access AI DBA Assistant")
+    return False
+
+
+def logout():
+    st.session_state.clear()
+    st.rerun()
