@@ -89,17 +89,15 @@ if not user:
 
         # LOGIN TAB
         with tab1:
-            
-    st.markdown("### 🔐 Login")
-
-    if st.button("🔵 Continue with Google"):
-        try:
-            response = supabase.auth.sign_in_with_oauth({
-                "provider": "google",
-                "options": {
+            st.markdown("### 🔐 Login")
+                if st.button("🔵 Continue with Google"):
+                    try:
+                    response = supabase.auth.sign_in_with_oauth({
+                    "provider": "google",
+                    "options": {
                     "redirect_to": "http://localhost:8501"
-                }
-            })
+                    }
+                    })
 
             # 🚀 Direct redirect (no extra page)
             st.markdown(f"""
