@@ -1,5 +1,9 @@
 import streamlit as st
 from auth import login, logout, get_user, supabase
+import os
+from openai import OpenAI
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # -------------------------------
 # ⚙️ PAGE CONFIG
@@ -183,20 +187,40 @@ elif page == "💬 AI Chat":
 
     question = st.text_input("Ask Oracle question...")
 
-    if question:
-        st.markdown("### 🔍 Analysis")
+#    if question:
+#        st.markdown("### 🔍 Analysis")
 
-        st.markdown("""
-**Possible issues:**
-- Missing indexes
-- Full table scans
-- High CPU usage
+#        st.markdown("""
+#**Possible issues:**
+#- Missing indexes
+#- Full table scans
+#- High CPU usage
 
-💡 **Suggestion**
-- Add index
-- Gather stats
-- Optimize query
-""")
+#💡 **Suggestion**
+#- Add index
+#- Gather stats
+#- Optimize query
+#""")
+if question:
+    with st.spinner("Analyzing..."):
+
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": "You are an Oracle DBA expert helping optimize SQL queries."},
+                    {"role": "user", "content": question}
+                ]
+            )
+
+            answer = response.choices[0].message.content
+
+            st.markdown("### 🤖 AI Response")
+            st.write(answer)
+
+        except Exception as e:
+            st.error(f"AI Error: {e}")
+
 
 elif page == "📊 Reports":
     st.markdown("## 📊 Reports")
