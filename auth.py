@@ -4,7 +4,7 @@ from supabase import create_client
 # -------------------------------
 # 🔑 CONFIG
 # -------------------------------
-SUPABASE_URL = "https://wequqsbvhdyvugifevhm.supabase.co"
+SUPABASE_URL = "https://wequqsbvhydvugifevhm.supabase.co"                            
 SUPABASE_KEY = "sb_publishable_ZOfGu0PLriJqtJLdmk6Bkg_mJ3HrURB"   # 👈 put your key
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
