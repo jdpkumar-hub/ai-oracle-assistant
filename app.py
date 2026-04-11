@@ -16,34 +16,32 @@ st.set_page_config(
 st.markdown("""
 <style>
 
-/* Background */
-.main {
-    background-color: #f3f6fb;
+/* Reduce top spacing */
+.block-container {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
 }
 
-/* Sidebar */
-[data-testid="stSidebar"] {
-    background-color: #f8fafc;
-}
-
-/* Left branding panel */
+/* Left panel */
 .left-panel {
     background: linear-gradient(135deg, #e0ecff, #f0f6ff);
     padding: 40px;
     border-radius: 20px;
+    min-height: 500px;
 }
 
-/* Right login card */
+/* Right panel */
 .card {
     background-color: white;
-    padding: 30px;
+    padding: 25px;
     border-radius: 20px;
-    box-shadow: 0px 10px 30px rgba(0,0,0,0.08);
+    box-shadow: 0px 8px 24px rgba(0,0,0,0.08);
 }
 
-/* Shift right panel */
+/* Move right panel closer */
 .right-panel {
-    margin-left: -30px;
+    margin-left: -10px;
+    margin-top: 40px;
 }
 
 </style>
@@ -72,7 +70,7 @@ user = get_user()
 # =========================================================
 if not user:
 
-    col1, col2, col3 = st.columns([1.2, 1, 0.3])
+    col1, col2 = st.columns([1.1, 1])
 
     # -------- LEFT PANEL --------
     with col1:
@@ -94,7 +92,8 @@ if not user:
 
     # -------- RIGHT PANEL --------
     with col2:
-        st.markdown('<div class="right-panel">', unsafe_allow_html=True)
+       st.markdown('<div class="right-panel">', unsafe_allow_html=True)
+       st.write("")  # small vertical gap
         st.markdown('<div class="card">', unsafe_allow_html=True)
 
         tab1, tab2, tab3 = st.tabs(["🔐 Login", "🆕 Signup", "🔑 Reset"])
