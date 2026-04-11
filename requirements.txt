@@ -3,3 +3,4 @@ openai
 oracledb
 supabase
 pandas
+reportlab
