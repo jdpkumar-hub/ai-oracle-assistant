@@ -1,5 +1,6 @@
 import streamlit as st
 from auth import login, logout, get_user
+from auth import supabase
 
 # -------------------------------
 # ⚙️ PAGE CONFIG
