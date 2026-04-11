@@ -201,26 +201,38 @@ elif page == "💬 AI Chat":
 #- Gather stats
 #- Optimize query
 #""")
-if question:
-    with st.spinner("Analyzing..."):
+question = st.text_input("Ask Oracle question...")
+elif page == "💬 AI Chat":
+    st.markdown("## 💬 AI DBA Chat")
 
-        try:
-            response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": "You are an Oracle DBA expert helping optimize SQL queries."},
-                    {"role": "user", "content": question}
-                ]
-            )
+    # ✅ DEFINE question FIRST
+    question = st.text_input("Ask Oracle question...")
 
-            answer = response.choices[0].message.content
+    # ✅ THEN use it
+    if question:
+        with st.spinner("Analyzing..."):
 
-            st.markdown("### 🤖 AI Response")
-            st.write(answer)
+            try:
+                from openai import OpenAI
+                import os
 
-        except Exception as e:
-            st.error(f"AI Error: {e}")
+                client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+                response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "system", "content": "You are an Oracle DBA expert."},
+                        {"role": "user", "content": question}
+                    ]
+                )
+
+                answer = response.choices[0].message.content
+
+                st.markdown("### 🤖 AI Response")
+                st.write(answer)
+
+            except Exception as e:
+                st.error(f"AI Error: {e}")
 
 elif page == "📊 Reports":
     st.markdown("## 📊 Reports")
