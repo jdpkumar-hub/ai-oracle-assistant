@@ -91,12 +91,12 @@ if not user:
         st.markdown('</div>', unsafe_allow_html=True)
 
     # -------- RIGHT PANEL --------
-        with col2:
-        st.markdown('<div class="right-panel">', unsafe_allow_html=True)
-        st.write("")  # small vertical gap
-        st.markdown('<div class="card">', unsafe_allow_html=True)
+       with col2:
+            st.markdown('<div class="right-panel">', unsafe_allow_html=True)
+            st.write("")  # small vertical gap
+            st.markdown('<div class="card">', unsafe_allow_html=True)
 
-        tab1, tab2, tab3 = st.tabs(["🔐 Login", "🆕 Signup", "🔑 Reset"])
+            tab1, tab2, tab3 = st.tabs(["🔐 Login", "🆕 Signup", "🔑 Reset"])
 
         # LOGIN TAB
         with tab1:
