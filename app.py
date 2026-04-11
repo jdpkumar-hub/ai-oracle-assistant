@@ -28,7 +28,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -------------------------------
-# 🔐 HANDLE OAUTH CODE (DO NOT TOUCH)
+# 🔐 HANDLE OAUTH CODE
 # -------------------------------
 params = st.query_params
 
@@ -46,7 +46,7 @@ if "code" in params:
 user = get_user()
 
 # =========================================================
-# 🧑‍💻 LOGIN LANDING PAGE (NEW UI)
+# 🧑‍💻 LOGIN LANDING PAGE (TABS UI)
 # =========================================================
 if not user:
 
@@ -54,7 +54,7 @@ if not user:
 
     # -------- LEFT PANEL --------
     with col1:
-        st.image("logo.png", width=120)
+        st.image("logo.png", width=220)
         st.markdown("## AI DBA Assistant")
         st.caption("🚀 Smart Oracle Optimization Platform")
 
@@ -70,22 +70,16 @@ if not user:
     with col2:
         st.markdown('<div class="card">', unsafe_allow_html=True)
 
-        option = st.selectbox(
-            "Choose Action",
-            ["Login", "Create Account", "Reset Password"]
-        )
+        tab1, tab2, tab3 = st.tabs(["🔐 Login", "🆕 Signup", "🔑 Reset"])
 
-        # ---------------- LOGIN ----------------
-        if option == "Login":
-            st.subheader("🔐 Login")
-            login()   # 👈 YOUR EXISTING GOOGLE LOGIN (UNCHANGED)
+        # ---------------- LOGIN TAB ----------------
+        with tab1:
+            login()   # 👈 YOUR GOOGLE LOGIN (UNCHANGED)
 
-        # ---------------- SIGNUP ----------------
-        elif option == "Create Account":
-            st.subheader("🆕 Create Account")
-
-            email = st.text_input("Email")
-            password = st.text_input("Password", type="password")
+        # ---------------- SIGNUP TAB ----------------
+        with tab2:
+            email = st.text_input("Email", key="signup_email")
+            password = st.text_input("Password", type="password", key="signup_pass")
 
             if st.button("Create Account"):
                 try:
@@ -97,11 +91,9 @@ if not user:
                 except Exception as e:
                     st.error(f"Error: {e}")
 
-        # ---------------- RESET ----------------
-        elif option == "Reset Password":
-            st.subheader("🔑 Reset Password")
-
-            email = st.text_input("Enter your email")
+        # ---------------- RESET TAB ----------------
+        with tab3:
+            email = st.text_input("Enter your email", key="reset_email")
 
             if st.button("Send Reset Link"):
                 try:
@@ -115,7 +107,7 @@ if not user:
     st.stop()
 
 # =========================================================
-# 🎯 MAIN APP (UNCHANGED CORE)
+# 🎯 SIDEBAR
 # =========================================================
 with st.sidebar:
     col1, col2 = st.columns([1, 2])
@@ -138,9 +130,9 @@ with st.sidebar:
 
     logout()
 
-# -------------------------------
-# MAIN CONTENT
-# -------------------------------
+# =========================================================
+# 🧠 MAIN CONTENT
+# =========================================================
 if page == "🏠 Dashboard":
     st.markdown("## 🏠 Dashboard")
     st.info("Welcome to AI DBA Assistant 🚀")
