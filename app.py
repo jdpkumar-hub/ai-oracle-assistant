@@ -51,7 +51,7 @@ st.markdown("""
 # 🧭 SIDEBAR (LEFT PANEL)
 # -------------------------------
 with st.sidebar:
-    st.image("logo.png", width=100)
+    st.image("logo.png", width=300)
 
     st.markdown("## AI DBA Assistant")
     st.caption("Smart Oracle Optimization")
