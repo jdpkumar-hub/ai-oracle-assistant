@@ -80,26 +80,37 @@ def login():
 #           )
 
 
-# Google Login
-
 # Google Login (Clean Button)
-st.markdown(f"""
-<a href="{res.url}" target="_self">
-    <div style="
-        display:flex;
-        align-items:center;
-        border:1px solid #ccc;
-        padding:10px;
-        width:260px;
-        border-radius:6px;
-        cursor:pointer;
-        background:white;
-    ">
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20">
-        <span style="margin-left:10px;">Continue with Google</span>
-    </div>
-</a>
-""", unsafe_allow_html=True)
+try:
+    res = supabase.auth.sign_in_with_oauth({
+        "provider": "google",
+        "options": {
+            "redirect_to": REDIRECT_URL
+        }
+    })
+
+    if res.url:
+        st.markdown(f"""
+        <a href="{res.url}" target="_self">
+            <div style="
+                display:flex;
+                align-items:center;
+                border:1px solid #ccc;
+                padding:10px;
+                width:260px;
+                border-radius:6px;
+                cursor:pointer;
+                background:white;
+                margin-top:10px;
+            ">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20">
+                <span style="margin-left:10px;">Continue with Google</span>
+            </div>
+        </a>
+        """, unsafe_allow_html=True)
+
+except Exception as e:
+    st.error(f"Google login error: {e}")
 # -------------------------------
 # SIGNUP (WITH CONFIRM PASSWORD)
 # -------------------------------
