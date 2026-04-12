@@ -61,6 +61,11 @@ st.markdown("""
 # -------------------------------
 user = get_user()
 
+if user:
+    st.session_state.user = user
+elif "user" in st.session_state:
+    user = st.session_state.user
+
 # ================= LOGIN =================
 if not user:
 
@@ -115,7 +120,7 @@ if not user:
 
 # ================= MAIN =================
 with st.sidebar:
-    st.image("logo.png", width=60)
+    st.image("image/logo.png", width=200)
     page = st.radio("", ["🏠 Dashboard", "💬 AI Chat", "📊 Reports", "📜 History", "⚙️ Settings"])
     st.success(user.email)
     logout()

@@ -4,8 +4,8 @@ from supabase import create_client
 # -------------------------------
 # 🔑 CONFIG
 # -------------------------------
-SUPABASE_URL = "https://wequqsbvhydvugifevhm.supabase.co"                            
-SUPABASE_KEY = "sb_publishable_ZOfGu0PLriJqtJLdmk6Bkg_mJ3HrURB"   # 👈 put your key
+SUPABASE_URL = "https://wequqsbvhydvugifevhm.supabase.co"
+SUPABASE_KEY = "sb_publishable_ZOfGu0PLriJqtJLdmk6Bkg_mJ3HrURB"
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
@@ -29,7 +29,6 @@ def login():
             }
         })
 
-        # ✅ FIX HERE
         auth_url = res.url
 
         if auth_url:
@@ -45,6 +44,12 @@ def login():
             )
 
             return False
+
+    # ✅ AFTER REDIRECT — STORE SESSION
+    user = get_user()
+    if user:
+        st.session_state.user = user
+        st.rerun()
 
     return False
 
