@@ -98,21 +98,48 @@ def login():
     st.divider()
 
     # Google Login
-    if st.button("🔵 Continue with Google"):
+ # -------------------------------
+# 🔵 GOOGLE LOGIN (SMART UX FIX)
+# -------------------------------
+st.markdown("### Or login with Google")
+
+# Step 1: Button click
+if st.button("🔵 Continue with Google", key="google_btn"):
+    try:
         res = supabase.auth.sign_in_with_oauth({
             "provider": "google",
             "options": {
-                "redirect_to": REDIRECT_URL
+                "redirect_to": "https://ai-oracle-assistant.streamlit.app"
             }
         })
 
-        if res.url:
-            st.markdown(f"[Click here if not redirected]({res.url})")
-            st.markdown(
-                f"""<script>window.location.href="{res.url}"</script>""",
-                unsafe_allow_html=True
-            )
+        if res and res.url:
+            st.session_state.google_url = res.url
+            st.session_state.google_clicked = True
+            st.rerun()
 
+    except Exception as e:
+        st.error(f"Google login error: {e}")
+
+
+# Step 2: After click → show redirect button
+if st.session_state.get("google_clicked") and st.session_state.get("google_url"):
+
+    st.markdown(f"""
+    <a href="{st.session_state.google_url}" target="_self">
+        <button style="
+            width:100%;
+            padding:12px;
+            border-radius:8px;
+            border:1px solid #ccc;
+            background:white;
+            cursor:pointer;
+            font-size:16px;
+        ">
+        🔵 Continue with Google
+        </button>
+    </a>
+    """, unsafe_allow_html=True)
 # -------------------------------
 # SIGNUP
 # -------------------------------
