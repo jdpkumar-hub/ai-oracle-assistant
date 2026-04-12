@@ -41,6 +41,8 @@ if st.session_state.get("reset_mode"):
 # LOGIN (EMAIL + GOOGLE)
 # -------------------------------
 def login():
+    st.write("LOGIN FUNCTION RUNNING")  # DEBUG
+
     st.markdown("## 🔐 Login")
 
     email = st.text_input("Email")
@@ -64,30 +66,33 @@ def login():
     st.divider()
 
     # -------------------------------
-    # Google Login (FIXED)
+    # 🔵 GOOGLE LOGIN (FIXED)
     # -------------------------------
-    # Google Login
-# Google Login Button (FIXED)
-st.markdown("### Or login with Google")
+    st.markdown("### Or login with Google")
 
-if st.button("🔵 Continue with Google", use_container_width=True):
+    if st.button("🔵 Continue with Google", key="google_login"):
 
-    res = supabase.auth.sign_in_with_oauth({
-        "provider": "google",
-        "options": {
-            "redirect_to": "https://ai-oracle-assistant.streamlit.app"
-        }
-    })
+        try:
+            res = supabase.auth.sign_in_with_oauth({
+                "provider": "google",
+                "options": {
+                    "redirect_to": REDIRECT_URL
+                }
+            })
 
-    if res and res.url:
-        st.markdown(
-            f"<script>window.location.href='{res.url}'</script>",
-            unsafe_allow_html=True
-        )
-    else:
-        st.error("Google login failed to start")
+            if res and res.url:
+                st.markdown(
+                    f"<script>window.location.href='{res.url}'</script>",
+                    unsafe_allow_html=True
+                )
+            else:
+                st.error("Google OAuth URL not generated")
+
+        except Exception as e:
+            st.error(f"Google login error: {e}")
+
 # -------------------------------
-# SIGNUP (WITH CONFIRM PASSWORD)
+# SIGNUP
 # -------------------------------
 def signup():
     st.markdown("## 🆕 Create Account")
@@ -111,7 +116,7 @@ def signup():
             })
 
             if res.user:
-                st.success("Account created! Check your email for verification link")
+                st.success("Account created! Check your email")
             else:
                 st.error("Signup failed")
 
@@ -132,10 +137,10 @@ def reset_password():
                 email,
                 options={"redirect_to": REDIRECT_URL}
             )
-            st.success("Reset link sent to email")
+            st.success("Reset link sent")
 
         except Exception as e:
-            st.error(f"Failed to send reset email: {e}")
+            st.error(f"Failed: {e}")
 
 # -------------------------------
 # GET USER
