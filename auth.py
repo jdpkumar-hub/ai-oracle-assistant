@@ -74,37 +74,10 @@ def login():
 # -------------------------------
 # 🔵 GOOGLE LOGIN (FINAL FIX)
 # -------------------------------
-def login():
-    st.markdown("## 🔐 Login")
-
-    email = st.text_input("Email")
-    password = st.text_input("Password", type="password")
-
-    if st.button("Login"):
-        try:
-            res = supabase.auth.sign_in_with_password({
-                "email": email,
-                "password": password
-            })
-
-            if res.user:
-                st.session_state.user = res.user
-                st.success("Login successful")
-                st.rerun()
-
-        except Exception as e:
-            st.error("Invalid credentials")
-
-    st.divider()
-
-    # Google Login
- # -------------------------------
-# 🔵 GOOGLE LOGIN (SMART UX FIX)
-# -------------------------------
 st.markdown("### Or login with Google")
 
-# Step 1: Button click
-if st.button("🔵 Continue with Google", key="google_btn"):
+if st.button("🔵 Continue with Google"):
+
     try:
         res = supabase.auth.sign_in_with_oauth({
             "provider": "google",
@@ -114,32 +87,21 @@ if st.button("🔵 Continue with Google", key="google_btn"):
         })
 
         if res and res.url:
-            st.session_state.google_url = res.url
-            st.session_state.google_clicked = True
-            st.rerun()
+            st.write("Redirecting to Google...")
+
+            # Force redirect (WORKING WAY)
+            st.components.v1.html(f"""
+                <script>
+                    window.location.href = "{res.url}";
+                </script>
+            """, height=0)
+
+        else:
+            st.error("OAuth URL not generated")
 
     except Exception as e:
         st.error(f"Google login error: {e}")
 
-
-# Step 2: After click → show redirect button
-if st.session_state.get("google_clicked") and st.session_state.get("google_url"):
-
-    st.markdown(f"""
-    <a href="{st.session_state.google_url}" target="_self">
-        <button style="
-            width:100%;
-            padding:12px;
-            border-radius:8px;
-            border:1px solid #ccc;
-            background:white;
-            cursor:pointer;
-            font-size:16px;
-        ">
-        🔵 Continue with Google
-        </button>
-    </a>
-    """, unsafe_allow_html=True)
 # -------------------------------
 # SIGNUP
 # -------------------------------
