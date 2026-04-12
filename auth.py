@@ -12,14 +12,45 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 REDIRECT_URL = "https://ai-oracle-assistant.streamlit.app"
 
 # -------------------------------
+# 🔑 RESET PASSWORD SCREEN
+# -------------------------------
+if st.session_state.get("reset_mode"):
+
+    st.title("🔑 Set New Password")
+
+    new_pass = st.text_input("New Password", type="password")
+    confirm_pass = st.text_input("Confirm Password", type="password")
+
+    if st.button("Update Password"):
+        if new_pass != confirm_pass:
+            st.error("Passwords do not match")
+        else:
+            try:
+                supabase.auth.update_user({
+                    "password": new_pass
+                })
+                st.success("Password updated successfully!")
+                st.session_state.reset_mode = False
+                st.rerun()
+            except Exception as e:
+                st.error(f"Error: {e}")
+
+    st.stop()
+
+# -------------------------------
 # LOGIN (EMAIL + GOOGLE)
 # -------------------------------
 def login():
+    st.write("LOGIN FUNCTION RUNNING")  # DEBUG
+
     st.markdown("## 🔐 Login")
 
     email = st.text_input("Email")
     password = st.text_input("Password", type="password")
 
+    # -------------------------------
+    # EMAIL LOGIN
+    # -------------------------------
     if st.button("Login"):
         try:
             res = supabase.auth.sign_in_with_password({
@@ -32,29 +63,59 @@ def login():
                 st.success("Login successful")
                 st.rerun()
 
-        except Exception as e:
+        except Exception:
             st.error("Invalid credentials")
 
     st.divider()
 
-    # Google Login
-    if st.button("🔵 Continue with Google"):
-        res = supabase.auth.sign_in_with_oauth({
-            "provider": "google",
-            "options": {
-                "redirect_to": REDIRECT_URL
-            }
-        })
+    # -------------------------------
+    # 🔵 GOOGLE LOGIN (SMART UX FIX)
+    # -------------------------------
+    st.markdown("### Or login with Google")
 
-        if res.url:
-            st.markdown(f"[Click here if not redirected]({res.url})")
-            st.markdown(
-                f"""<script>window.location.href="{res.url}"</script>""",
-                unsafe_allow_html=True
-            )
+    # Step 1 → normal button
+    if not st.session_state.get("google_clicked"):
+
+        if st.button("🔵 Continue with Google", key="google_btn"):
+            try:
+                res = supabase.auth.sign_in_with_oauth({
+                    "provider": "google",
+                    "options": {
+                        "redirect_to": REDIRECT_URL
+                    }
+                })
+
+                if res and res.url:
+                    st.session_state.google_url = res.url
+                    st.session_state.google_clicked = True
+                    st.rerun()
+
+            except Exception as e:
+                st.error(f"Google login error: {e}")
+
+    # Step 2 → same button becomes redirect
+    else:
+        if st.session_state.get("google_url"):
+            st.info("Redirecting... click again if not automatic")
+
+            st.markdown(f"""
+            <a href="{st.session_state.google_url}" target="_self">
+                <button style="
+                    width:100%;
+                    padding:12px;
+                    border-radius:8px;
+                    border:1px solid #ccc;
+                    background:white;
+                    cursor:pointer;
+                    font-size:16px;
+                ">
+                🔵 Continue with Google
+                </button>
+            </a>
+            """, unsafe_allow_html=True)
 
 # -------------------------------
-# SIGNUP (WITH CONFIRM PASSWORD)
+# SIGNUP
 # -------------------------------
 def signup():
     st.markdown("## 🆕 Create Account")
@@ -69,15 +130,21 @@ def signup():
             return
 
         try:
-            supabase.auth.sign_up({
+            res = supabase.auth.sign_up({
                 "email": email,
-                "password": password
+                "password": password,
+                "options": {
+                    "email_redirect_to": REDIRECT_URL
+                }
             })
 
-            st.success("Account created! Check email for verification link")
+            if res.user:
+                st.success("Account created! Check your email")
+            else:
+                st.error("Signup failed")
 
         except Exception as e:
-            st.error("Signup failed")
+            st.error(f"Error: {e}")
 
 # -------------------------------
 # RESET PASSWORD
@@ -89,10 +156,14 @@ def reset_password():
 
     if st.button("Send Reset Link"):
         try:
-            supabase.auth.reset_password_email(email)
-            st.success("Reset link sent to email")
-        except:
-            st.error("Failed to send reset email")
+            supabase.auth.reset_password_email(
+                email,
+                options={"redirect_to": REDIRECT_URL}
+            )
+            st.success("Reset link sent")
+
+        except Exception as e:
+            st.error(f"Failed: {e}")
 
 # -------------------------------
 # GET USER
