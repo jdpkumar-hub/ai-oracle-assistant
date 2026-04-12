@@ -6,6 +6,43 @@ import pandas as pd
 from reportlab.platypus import SimpleDocTemplate, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+from io import BytesIO
+
+#-----------------------------------------------------
+# DOWNLOAD REPORT
+#-----------------------------------------------------
+
+def create_pdf(text):
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer)
+
+    styles = getSampleStyleSheet()
+    story = []
+
+    # Split into lines
+    lines = text.split("\n")
+
+    for line in lines:
+        line = line.strip()
+
+        if not line:
+            story.append(Spacer(1, 10))
+            continue
+
+        # Headings
+        if line.startswith("###") or line.startswith("##"):
+            story.append(Paragraph(f"<b>{line.replace('#','').strip()}</b>", styles["Heading2"]))
+        else:
+            story.append(Paragraph(line, styles["Normal"]))
+
+        story.append(Spacer(1, 8))
+
+    doc.build(story)
+    buffer.seek(0)
+
+    return buffer
 
 # -------------------------------
 # 🔐 HANDLE OAUTH CALLBACK (FIXED)
@@ -36,16 +73,16 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 #-----------------------------------------------------
 # DOWNLOAD REPORT
 #-----------------------------------------------------
-def create_pdf(text):
-    buffer = BytesIO()
-
-    doc = SimpleDocTemplate(buffer)
-    styles = getSampleStyleSheet()
-    story = [Paragraph(text, styles["Normal"])]
-    doc.build(story)
-
-    buffer.seek(0)
-    return buffer
+#def create_pdf(text):
+#   buffer = BytesIO()
+#
+#   doc = SimpleDocTemplate(buffer)
+#   styles = getSampleStyleSheet()
+#   story = [Paragraph(text, styles["Normal"])]
+#   doc.build(story)
+#
+#   buffer.seek(0)
+#   return buffer
 
 # -------------------------------
 # ⚙️ PAGE CONFIG
@@ -169,18 +206,45 @@ if page == "🏠 Dashboard":
         df = pd.DataFrame(data.data)
 
         if not df.empty:
-            st.metric("Total Queries", len(df))
+
+            # METRICS
+            col1, col2 = st.columns(2)
+
+            col1.metric("Total Queries", len(df))
 
             df["created_at"] = pd.to_datetime(df["created_at"])
             df["date"] = df["created_at"].dt.date
-            daily = df.groupby("date").size()
 
-            st.subheader("📈 Queries per Day")
-            st.line_chart(daily)
+            col2.metric("Active Days", df["date"].nunique())
+
+            st.divider()
+
+            # 📈 LINE CHART
+            st.subheader("📈 Queries Trend")
+            trend = df.groupby("date").size()
+            st.line_chart(trend)
+
+            st.divider()
+
+            # 📊 TYPE BREAKDOWN
+            def classify(q):
+                if "AWR" in q:
+                    return "AWR"
+                elif "select" in q.lower():
+                    return "SQL"
+                else:
+                    return "Chat"
+
+            df["type"] = df["question"].apply(classify)
+            type_count = df["type"].value_counts()
+
+            st.subheader("📊 Usage Breakdown")
+            st.bar_chart(type_count)
+
         else:
             st.info("No data yet")
 
-    except Exception:
+    except Exception as e:
         st.error("Error loading dashboard")
 
 elif page == "💬 AI Chat":
