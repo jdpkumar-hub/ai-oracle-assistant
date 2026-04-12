@@ -11,11 +11,6 @@ import streamlit as st
 
 import time
 
-refresh_rate = st.slider("Refresh Interval (sec)", 2, 10, 5)
-
-time.sleep(refresh_rate)
-st.rerun()
-
 # -------------------------------
 # ORACLE DB
 # -------------------------------
@@ -318,12 +313,13 @@ elif page == "📡 Live Monitoring":
 
     st.title("📡 Real-Time Oracle Monitoring")
 
+    # ✅ Slider ONLY here
+    refresh_rate = st.slider("Refresh Interval (sec)", 2, 10, 5)
+
     conn = get_connection()
     cursor = conn.cursor()
 
-    # ---------------------------
-    # CPU USAGE
-    # ---------------------------
+    # CPU
     cursor.execute("""
         SELECT value 
         FROM v$sysmetric 
@@ -332,9 +328,7 @@ elif page == "📡 Live Monitoring":
     """)
     cpu = cursor.fetchone()[0]
 
-    # ---------------------------
-    # ACTIVE SESSIONS
-    # ---------------------------
+    # Sessions
     cursor.execute("""
         SELECT COUNT(*) 
         FROM v$session 
@@ -342,9 +336,7 @@ elif page == "📡 Live Monitoring":
     """)
     sessions = cursor.fetchone()[0]
 
-    # ---------------------------
-    # TOP WAIT EVENTS
-    # ---------------------------
+    # Waits
     cursor.execute("""
         SELECT event, total_waits 
         FROM v$system_event
@@ -352,23 +344,19 @@ elif page == "📡 Live Monitoring":
     """)
     waits = cursor.fetchall()
 
-    # ---------------------------
-    # DISPLAY METRICS
-    # ---------------------------
     col1, col2 = st.columns(2)
-
     col1.metric("CPU Usage", f"{round(cpu,2)}%")
     col2.metric("Active Sessions", sessions)
 
     st.divider()
 
-    # ---------------------------
-    # WAIT EVENTS
-    # ---------------------------
     st.subheader("Top Wait Events")
-
     for event, waits_count in waits:
         st.write(f"🔹 {event} → {waits_count}")
+
+    # ✅ Controlled refresh
+    time.sleep(refresh_rate)
+    st.rerun()
 
 # ================= HISTORY =================
 elif page == "📜 History":
