@@ -3,13 +3,10 @@ from auth import login, logout, get_user, supabase
 import os
 from openai import OpenAI
 import pandas as pd
-from reportlab.platypus import SimpleDocTemplate, Paragraph
-from reportlab.lib.styles import getSampleStyleSheet
-from io import BytesIO
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
-
+from auth import login, signup, reset_password, logout, get_user, supabase
 #-----------------------------------------------------
 # DOWNLOAD REPORT
 #-----------------------------------------------------
@@ -157,34 +154,19 @@ if not user:
 
         tab1, tab2, tab3 = st.tabs(["🔐 Login", "🆕 Signup", "🔑 Reset"])
 
-        with tab1:
+         with tab1:
             login()
 
         with tab2:
-            email = st.text_input("Email")
-            password = st.text_input("Password", type="password")
-
-            if st.button("Create Account"):
-                try:
-                    supabase.auth.sign_up({"email": email, "password": password})
-                    st.success("Account created")
-                except Exception as e:
-                    st.error(e)
+            signup()
 
         with tab3:
-            email = st.text_input("Reset Email")
-
-            if st.button("Send Reset"):
-                try:
-                    supabase.auth.reset_password_email(email)
-                    st.success("Email sent")
-                except Exception as e:
-                    st.error(e)
+            reset_password()
 
         st.markdown('</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-    st.stop()
+        st.stop()
 
 # ================= MAIN =================
 with st.sidebar:

@@ -2,7 +2,7 @@ import streamlit as st
 from supabase import create_client
 
 # -------------------------------
-# 🔑 CONFIG
+# CONFIG
 # -------------------------------
 SUPABASE_URL = "https://wequqsbvhydvugifevhm.supabase.co"
 SUPABASE_KEY = "sb_publishable_ZOfGu0PLriJqtJLdmk6Bkg_mJ3HrURB"
@@ -12,77 +12,103 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 REDIRECT_URL = "https://ai-oracle-assistant.streamlit.app"
 
 # -------------------------------
-# 🔐 LOGIN FUNCTION
+# LOGIN (EMAIL + GOOGLE)
 # -------------------------------
 def login():
     st.markdown("## 🔐 Login")
 
-    # 🔵 Google Login Button
-    if st.button("🔵 Continue with Google"):
+    email = st.text_input("Email")
+    password = st.text_input("Password", type="password")
 
+    if st.button("Login"):
+        try:
+            res = supabase.auth.sign_in_with_password({
+                "email": email,
+                "password": password
+            })
+
+            if res.user:
+                st.session_state.user = res.user
+                st.success("Login successful")
+                st.rerun()
+
+        except Exception as e:
+            st.error("Invalid credentials")
+
+    st.divider()
+
+    # Google Login
+    if st.button("🔵 Continue with Google"):
         res = supabase.auth.sign_in_with_oauth({
             "provider": "google",
             "options": {
-                "redirect_to": REDIRECT_URL,
-                "query_params": {
-                    "prompt": "consent"
-                }
+                "redirect_to": REDIRECT_URL
             }
         })
 
-        auth_url = res.url
-
-        if auth_url:
-            # Fallback clickable link
-            st.markdown(f"[👉 Click here if not redirected]({auth_url})")
-
-            # Auto redirect
+        if res.url:
+            st.markdown(f"[Click here if not redirected]({res.url})")
             st.markdown(
-                f"""
-                <script>
-                window.location.href = "{auth_url}";
-                </script>
-                """,
+                f"""<script>window.location.href="{res.url}"</script>""",
                 unsafe_allow_html=True
             )
 
-            return False
+# -------------------------------
+# SIGNUP (WITH CONFIRM PASSWORD)
+# -------------------------------
+def signup():
+    st.markdown("## 🆕 Create Account")
 
-    # -------------------------------
-    # ✅ SESSION HANDLING AFTER REDIRECT
-    # -------------------------------
-    user = get_user()
+    email = st.text_input("Email", key="signup_email")
+    password = st.text_input("Password", type="password", key="signup_pass")
+    confirm = st.text_input("Confirm Password", type="password", key="signup_confirm")
 
-    if user:
-        # Store session safely
-        if "user" not in st.session_state or st.session_state.user is None:
-            st.session_state.user = user
-            st.rerun()
+    if st.button("Create Account"):
+        if password != confirm:
+            st.error("Passwords do not match")
+            return
 
-    return False
+        try:
+            supabase.auth.sign_up({
+                "email": email,
+                "password": password
+            })
 
+            st.success("Account created! Check email for verification link")
+
+        except Exception as e:
+            st.error("Signup failed")
 
 # -------------------------------
-# 🔐 GET USER (REAL CHECK)
+# RESET PASSWORD
+# -------------------------------
+def reset_password():
+    st.markdown("## 🔑 Reset Password")
+
+    email = st.text_input("Email", key="reset_email")
+
+    if st.button("Send Reset Link"):
+        try:
+            supabase.auth.reset_password_email(email)
+            st.success("Reset link sent to email")
+        except:
+            st.error("Failed to send reset email")
+
+# -------------------------------
+# GET USER
 # -------------------------------
 def get_user():
     try:
         res = supabase.auth.get_user()
         return res.user if res else None
-    except Exception:
+    except:
         return None
 
-
 # -------------------------------
-# 🚪 LOGOUT
+# LOGOUT
 # -------------------------------
 def logout():
     if st.button("🚪 Logout"):
-        try:
-            supabase.auth.sign_out()
-        except:
-            pass
-
-        # Clear session
+        supabase.auth.sign_out()
         st.session_state.clear()
         st.rerun()
