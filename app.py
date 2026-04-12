@@ -7,14 +7,21 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 import oracledb
-import streamlit as st
-
 import time
 
 # -------------------------------
-# ORACLE DB
+# CONFIG
 # -------------------------------
+st.set_page_config(page_title="AI DBA Assistant", page_icon="🤖", layout="wide")
 
+# -------------------------------
+# OPENAI
+# -------------------------------
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# -------------------------------
+# ORACLE CONNECTION
+# -------------------------------
 @st.cache_resource
 def get_connection():
     return oracledb.connect(
@@ -23,24 +30,8 @@ def get_connection():
         dsn=st.secrets["ORACLE_DSN"]
     )
 
-cursor.execute("""
-SELECT sql_id, elapsed_time/1000000 seconds
-FROM v$sql
-ORDER BY elapsed_time DESC FETCH FIRST 5 ROWS ONLY
-""")
-
-st.subheader("Top SQL by Time")
-
-for sql_id, sec in cursor.fetchall():
-    st.write(f"{sql_id} → {round(sec,2)} sec")
-    
 # -------------------------------
-# OPENAI CLIENT
-# -------------------------------
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-# -------------------------------
-# 🔐 SESSION INIT
+# SESSION INIT
 # -------------------------------
 if "user" not in st.session_state:
     st.session_state.user = None
@@ -54,84 +45,35 @@ def create_pdf(text):
     styles = getSampleStyleSheet()
     story = []
 
-    lines = text.split("\n")
-    for line in lines:
-        line = line.strip()
-        if not line:
-            story.append(Spacer(1, 10))
-            continue
-
-        if line.startswith("###") or line.startswith("##"):
-            story.append(Paragraph(f"<b>{line.replace('#','').strip()}</b>", styles["Heading2"]))
-        else:
+    for line in text.split("\n"):
+        if line.strip():
             story.append(Paragraph(line, styles["Normal"]))
-
-        story.append(Spacer(1, 8))
+            story.append(Spacer(1, 8))
 
     doc.build(story)
     buffer.seek(0)
     return buffer
 
 # -------------------------------
-# 🔐 HANDLE OAUTH CALLBACK
+# OAUTH HANDLER
 # -------------------------------
 params = st.query_params
 
-# Password reset handler
-if "type" in params and params["type"] == "recovery":
-    st.session_state.reset_mode = True
-    st.query_params.clear()
-    st.rerun()
-
-# OAuth handler (FIXED)
 if "code" in params:
     try:
         supabase.auth.exchange_code_for_session({
             "auth_code": params["code"]
         })
-
         st.query_params.clear()
-
         user = get_user()
-        if user and not st.session_state.user:
+        if user:
             st.session_state.user = user
             st.rerun()
-
     except Exception as e:
         st.error(f"Login failed: {e}")
 
-
-
 # -------------------------------
-# PAGE CONFIG
-# -------------------------------
-st.set_page_config(page_title="AI DBA Assistant", page_icon="🤖", layout="wide")
-
-# -------------------------------
-# STYLE
-# -------------------------------
-st.markdown("""
-<style>
-.block-container { padding-top: 1rem; }
-
-.card {
-    background-color: white;
-    padding: 25px;
-    border-radius: 20px;
-    box-shadow: 0px 8px 24px rgba(0,0,0,0.08);
-}
-
-.right-panel { margin-top: 40px; }
-
-.feature {
-    padding: 12px;
-    border-radius: 12px;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# -------------------------------
-# USER SESSION
+# LOGIN PAGE
 # -------------------------------
 user = get_user()
 if user:
@@ -139,239 +81,165 @@ if user:
 
 user = st.session_state.user
 
-# ================= LOGIN =================
 if not user:
+    tab1, tab2, tab3 = st.tabs(["🔐 Login", "🆕 Signup", "🔑 Reset"])
 
-    col1, col2 = st.columns([1, 3])
-
-    with col1:
-        st.image("image/logo2.png", width=220)
-        st.markdown("## AI DBA Assistant")
-        st.caption("🚀 Smart Oracle Optimization Platform")
-
-        st.markdown("""
-<div class="feature">⚡ SQL Performance Tuning</div>
-<div class="feature">📊 AWR Analysis</div>
-<div class="feature">🤖 AI Recommendations</div>
-<div class="feature">🚀 Real-time Insights</div>
-""", unsafe_allow_html=True)
-
-    with col2:
-        st.markdown('<div class="right-panel">', unsafe_allow_html=True)
-        st.markdown('<div class="card">', unsafe_allow_html=True)
-
-        tab1, tab2, tab3 = st.tabs(["🔐 Login", "🆕 Signup", "🔑 Reset"])
-
-        with tab1:
-            login()
-
-        with tab2:
-            signup()
-
-        with tab3:
-            reset_password()
-
-        st.markdown('</div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+    with tab1:
+        login()
+    with tab2:
+        signup()
+    with tab3:
+        reset_password()
 
     st.stop()
 
-# ================= MAIN =================
+# -------------------------------
+# SIDEBAR
+# -------------------------------
 with st.sidebar:
-    st.image("image/logo2.png", width=220)
-    page = st.radio("", ["🏠 Dashboard", "💬 AI Chat", "📊 Reports", "📜 History", "⚙️ Settings"])
+    st.title("AI DBA Assistant")
+    page = st.radio("", [
+        "🏠 Dashboard",
+        "💬 AI Chat",
+        "📊 Performance Diagnostics",
+        "📡 Live Monitoring",
+        "📜 History",
+        "⚙️ Settings"
+    ])
     st.success(user.email)
     logout()
 
-# ================= DASHBOARD =================
+# ===============================
+# DASHBOARD
+# ===============================
 if page == "🏠 Dashboard":
     st.title("📊 Dashboard")
 
-    try:
-        data = supabase.table("query_history")\
-            .select("*")\
-            .eq("user_email", user.email)\
-            .execute()
-
-        df = pd.DataFrame(data.data)
-
-        if not df.empty:
-            col1, col2 = st.columns(2)
-            col1.metric("Total Queries", len(df))
-
-            df["created_at"] = pd.to_datetime(df["created_at"])
-            df["date"] = df["created_at"].dt.date
-            col2.metric("Active Days", df["date"].nunique())
-
-            st.subheader("📈 Queries Trend")
-            st.line_chart(df.groupby("date").size())
-
-            def classify(q):
-                if "AWR" in q:
-                    return "AWR"
-                elif "select" in q.lower():
-                    return "SQL"
-                else:
-                    return "Chat"
-
-            df["type"] = df["question"].apply(classify)
-            st.subheader("📊 Usage Breakdown")
-            st.bar_chart(df["type"].value_counts())
-
-        else:
-            st.info("No data yet")
-
-    except Exception:
-        st.error("Error loading dashboard")
-
-# ================= AI CHAT =================
+# ===============================
+# AI CHAT
+# ===============================
 elif page == "💬 AI Chat":
-    st.title("AI DBA Assistant")
+    st.title("💬 AI DBA Assistant")
 
-    tab1, tab2, tab3 = st.tabs(["💬 Chat", "⚡ SQL Analyzer", "📊 AWR Analyzer"])
+    question = st.text_input("Ask anything...")
 
-    with tab1:
-        question = st.text_input("Ask anything...")
+    if question:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": question}]
+        )
+        answer = response.choices[0].message.content
+        st.write(answer)
 
-        if question:
-            response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[{"role": "user", "content": question}]
-            )
-            answer = response.choices[0].message.content
-            st.write(answer)
+        pdf = create_pdf(answer)
+        st.download_button("Download PDF", pdf, "report.pdf")
 
-            pdf_file = create_pdf(answer)
-            st.download_button("📄 Download Report", pdf_file, "report.pdf")
-
-    with tab2:
-        sql = st.text_area("Paste SQL")
-
-        if st.button("Analyze"):
-            response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[{"role": "user", "content": sql}]
-            )
-            answer = response.choices[0].message.content
-            st.write(answer)
-
-            pdf_file = create_pdf(answer)
-            st.download_button("📄 Download Report", pdf_file, "report.pdf")
-
-    with tab3:
-        file = st.file_uploader("Upload AWR", type=["txt"])
-
-        if file:
-            content = file.read().decode("utf-8")[:15000]
-
-            if st.button("Analyze AWR"):
-                response = client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=[{"role": "user", "content": content}]
-                )
-                st.write(response.choices[0].message.content)
-
-
-# =======PERFORMANCE DIAGNOSTICS=============
-
+# ===============================
+# PERFORMANCE DIAGNOSTICS
+# ===============================
 elif page == "📊 Performance Diagnostics":
     st.title("📊 AI Performance Diagnostics")
 
-    uploaded_file = st.file_uploader("Upload AWR Report (.txt)", type=["txt"])
+    file = st.file_uploader("Upload AWR Report", type=["txt"])
 
-    if uploaded_file:
-        content = uploaded_file.read().decode("utf-8")
+    if file:
+        content = file.read().decode("utf-8")
 
-        if st.button("Analyze Performance"):
-            with st.spinner("AI analyzing performance..."):
-
-                prompt = f"""
-                Analyze this Oracle AWR report and provide:
-
-                1. Top 5 performance issues
-                2. Root cause
-                3. Recommended fixes
-                4. SQL tuning suggestions
-
-                Report:
-                {content[:15000]}
-                """
-
+        if st.button("Analyze"):
+            with st.spinner("Analyzing..."):
                 response = client.chat.completions.create(
                     model="gpt-4o-mini",
-                    messages=[{"role": "user", "content": prompt}]
+                    messages=[{
+                        "role": "user",
+                        "content": f"Analyze this AWR report:\n{content[:15000]}"
+                    }]
                 )
+                st.write(response.choices[0].message.content)
 
-                result = response.choices[0].message.content
-
-                st.markdown("### 🔍 Analysis Result")
-                st.write(result)
-
-# =========LIVE MONITORING==============
-
+# ===============================
+# LIVE MONITORING
+# ===============================
 elif page == "📡 Live Monitoring":
 
     st.title("📡 Real-Time Oracle Monitoring")
 
-    # ✅ Slider ONLY here
+    # Refresh control
     refresh_rate = st.slider("Refresh Interval (sec)", 2, 10, 5)
+    auto_refresh = st.checkbox("Enable Auto Refresh", value=True)
 
-    conn = get_connection()
-    cursor = conn.cursor()
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
 
-    # CPU
-    cursor.execute("""
-        SELECT value 
-        FROM v$sysmetric 
-        WHERE metric_name = 'CPU Usage Per Sec'
-        AND rownum = 1
-    """)
-    cpu = cursor.fetchone()[0]
+        # CPU
+        cursor.execute("""
+            SELECT value 
+            FROM v$sysmetric 
+            WHERE metric_name = 'CPU Usage Per Sec'
+            AND rownum = 1
+        """)
+        cpu = cursor.fetchone()[0]
 
-    # Sessions
-    cursor.execute("""
-        SELECT COUNT(*) 
-        FROM v$session 
-        WHERE status = 'ACTIVE'
-    """)
-    sessions = cursor.fetchone()[0]
+        # Sessions
+        cursor.execute("""
+            SELECT COUNT(*) 
+            FROM v$session 
+            WHERE status = 'ACTIVE'
+        """)
+        sessions = cursor.fetchone()[0]
 
-    # Waits
-    cursor.execute("""
-        SELECT event, total_waits 
-        FROM v$system_event
-        ORDER BY total_waits DESC FETCH FIRST 5 ROWS ONLY
-    """)
-    waits = cursor.fetchall()
+        # Wait events
+        cursor.execute("""
+            SELECT event, total_waits 
+            FROM v$system_event
+            ORDER BY total_waits DESC FETCH FIRST 5 ROWS ONLY
+        """)
+        waits = cursor.fetchall()
 
-    col1, col2 = st.columns(2)
-    col1.metric("CPU Usage", f"{round(cpu,2)}%")
-    col2.metric("Active Sessions", sessions)
+        # Top SQL
+        cursor.execute("""
+            SELECT sql_id, elapsed_time/1000000 seconds
+            FROM v$sql
+            ORDER BY elapsed_time DESC FETCH FIRST 5 ROWS ONLY
+        """)
+        top_sql = cursor.fetchall()
 
-    st.divider()
+        col1, col2 = st.columns(2)
+        col1.metric("CPU Usage", f"{round(cpu,2)}%")
+        col2.metric("Active Sessions", sessions)
 
-    st.subheader("Top Wait Events")
-    for event, waits_count in waits:
-        st.write(f"🔹 {event} → {waits_count}")
+        st.divider()
 
-    # ✅ Controlled refresh
-    time.sleep(refresh_rate)
-    st.rerun()
+        st.subheader("Top Wait Events")
+        for event, count in waits:
+            st.write(f"{event} → {count}")
 
-# ================= HISTORY =================
+        st.subheader("Top SQL by Time")
+        for sql_id, sec in top_sql:
+            st.write(f"{sql_id} → {round(sec,2)} sec")
+
+    except Exception as e:
+        st.error(f"Database Error: {e}")
+
+    # Auto refresh
+    if auto_refresh:
+        time.sleep(refresh_rate)
+        st.rerun()
+
+# ===============================
+# HISTORY
+# ===============================
 elif page == "📜 History":
-    st.title("📜 Query History")
+    st.title("📜 History")
 
-# ================= REPORTS =================
-elif page == "📊 Reports":
-    st.title("Reports")
-
-# ================= SETTINGS =================
+# ===============================
+# SETTINGS
+# ===============================
 elif page == "⚙️ Settings":
-    st.title("Settings")
-    
-# =========================
-# 📌 FOOTER
-# =========================
+    st.title("⚙️ Settings")
+
+# -------------------------------
+# FOOTER
+# -------------------------------
 st.markdown("---")
-st.caption("© AI DBA Assistant | Built by Pradarshan Kumar JD 🚀")
+st.caption("© AI DBA Assistant 🚀")
