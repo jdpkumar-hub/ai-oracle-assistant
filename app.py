@@ -246,7 +246,7 @@ elif page == "💬 AI Chat":
                         file_name="report.pdf"
                      )
 
-                        try:
+                    try:
                         supabase.table("query_history").insert({
                             "user_email": user.email,
                             "question": sql,
