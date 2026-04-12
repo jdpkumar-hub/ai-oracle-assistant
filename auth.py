@@ -71,43 +71,36 @@ def login():
     # -------------------------------
     # 🔵 GOOGLE LOGIN (FINAL WORKING)
     # -------------------------------
-    st.markdown("### Or login with Google")
+# -------------------------------
+# 🔵 GOOGLE LOGIN (FINAL FIX)
+# -------------------------------
+st.markdown("### Or login with Google")
 
-    # Generate URL ONCE
-    if "google_url" not in st.session_state:
-        try:
-            res = supabase.auth.sign_in_with_oauth({
-                "provider": "google",
-                "options": {
-                    "redirect_to": REDIRECT_URL
-                }
-            })
+if st.button("🔵 Continue with Google"):
 
-            if res and res.url:
-                st.session_state.google_url = res.url
+    try:
+        res = supabase.auth.sign_in_with_oauth({
+            "provider": "google",
+            "options": {
+                "redirect_to": "https://ai-oracle-assistant.streamlit.app"
+            }
+        })
 
-        except Exception as e:
-            st.error(f"Google init error: {e}")
+        if res and res.url:
+            st.write("Redirecting to Google...")
 
-    # Show clickable button
-    if "google_url" in st.session_state:
-        st.markdown(f"""
-        <a href="{st.session_state.google_url}" target="_self">
-            <button style="
-                width:100%;
-                padding:12px;
-                border-radius:8px;
-                border:1px solid #ccc;
-                background:white;
-                cursor:pointer;
-                font-size:16px;
-            ">
-            🔵 Continue with Google
-            </button>
-        </a>
-        """, unsafe_allow_html=True)
-    else:
-        st.error("Google login not ready")
+            # Force redirect (WORKING WAY)
+            st.components.v1.html(f"""
+                <script>
+                    window.location.href = "{res.url}";
+                </script>
+            """, height=0)
+
+        else:
+            st.error("OAuth URL not generated")
+
+    except Exception as e:
+        st.error(f"Google login error: {e}")
 
 # -------------------------------
 # SIGNUP
