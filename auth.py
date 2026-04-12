@@ -68,7 +68,9 @@ def login():
     # -------------------------------
     # Google Login
 # Google Login Button (FIXED)
-if st.button("🔵 Continue with Google"):
+st.markdown("### Or login with Google")
+
+if st.button("🔵 Continue with Google", use_container_width=True):
 
     res = supabase.auth.sign_in_with_oauth({
         "provider": "google",
@@ -77,12 +79,13 @@ if st.button("🔵 Continue with Google"):
         }
     })
 
-    if res.url:
+    if res and res.url:
         st.markdown(
             f"<script>window.location.href='{res.url}'</script>",
             unsafe_allow_html=True
         )
-
+    else:
+        st.error("Google login failed to start")
 # -------------------------------
 # SIGNUP (WITH CONFIRM PASSWORD)
 # -------------------------------

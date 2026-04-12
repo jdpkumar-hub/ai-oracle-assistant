@@ -7,6 +7,14 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 from io import BytesIO
 from auth import login, signup, reset_password, logout, get_user, supabase
+
+# -------------------------------
+# 🔐 SESSION INIT (FIXED)
+# -------------------------------
+if "user" not in st.session_state:
+    st.session_state.user = None
+    
+    
 #-----------------------------------------------------
 # DOWNLOAD REPORT
 #-----------------------------------------------------
@@ -61,14 +69,17 @@ if "code" in params:
 
         st.query_params.clear()
 
-        user = get_user()
-        if user and "user" not in st.session_state:
-            st.session_state.user = user
-            st.rerun()
- 
+#        user = get_user()
+#       if user and "user" not in st.session_state:
+#           st.session_state.user = user
+#           st.rerun()
+            user = get_user()
 
-    except Exception as e:
-        st.error(f"Login failed: {e}")
+            if user and not st.session_state.user:
+                st.session_state.user = user
+
+            except Exception as e:
+                st.error(f"Login failed: {e}")
         
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
