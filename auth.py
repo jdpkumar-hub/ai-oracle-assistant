@@ -89,7 +89,12 @@ def reset_password():
 
     if st.button("Send Reset Link"):
         try:
-            supabase.auth.reset_password_email(email)
+            supabase.auth.reset_password_email(
+                email,
+                options={
+                        "redirect_to": "https://ai-oracle-assistant.streamlit.app"
+                }
+            )
             st.success("Reset link sent to email")
         except:
             st.error("Failed to send reset email")
