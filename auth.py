@@ -82,20 +82,33 @@ def login():
 
 # Google Login
 
-if st.button("🔵 Continue with Google"):
-    with st.spinner("Redirecting to Google..."):
-        res = supabase.auth.sign_in_with_oauth({
-            "provider": "google",
-            "options": {
-                "redirect_to": REDIRECT_URL
-            }
-        })
+# Google Login (Clean Button)
+res = supabase.auth.sign_in_with_oauth({
+    "provider": "google",
+    "options": {
+        "redirect_to": REDIRECT_URL
+    }
+})
 
-        if res.url:
-            st.markdown(
-                f"<script>window.location.href='{res.url}'</script>",
-                unsafe_allow_html=True
-            )
+if res.url:
+    st.markdown(f"""
+        <a href="{res.url}" target="_self">
+            <button style="
+                background-color:#4285F4;
+                color:white;
+                padding:10px 20px;
+                border:none;
+                border-radius:6px;
+                font-size:16px;
+                cursor:pointer;
+                display:flex;
+                align-items:center;
+                gap:10px;
+            ">
+                🔵 Continue with Google
+            </button>
+        </a>
+    """, unsafe_allow_html=True)
 # -------------------------------
 # SIGNUP (WITH CONFIRM PASSWORD)
 # -------------------------------
