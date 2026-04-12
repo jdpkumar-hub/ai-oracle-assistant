@@ -63,22 +63,42 @@ def login():
 
     st.divider()
 
-    # Google Login
-    if st.button("🔵 Continue with Google"):
-        res = supabase.auth.sign_in_with_oauth({
-            "provider": "google",
-            "options": {
-                "redirect_to": REDIRECT_URL
-            }
-        })
+#   # Google Login
+#   if st.button("🔵 Continue with Google"):
+#       res = supabase.auth.sign_in_with_oauth({
+#           "provider": "google",
+#           "options": {
+#               "redirect_to": REDIRECT_URL
+#           }
+#       })
+#
+#       if res.url:
+#           st.markdown(f"[Click here if not redirected]({res.url})")
+#           st.markdown(
+#               f"""<script>window.location.href="{res.url}"</script>""",
+#               unsafe_allow_html=True
+#           )
 
-        if res.url:
-            st.markdown(f"[Click here if not redirected]({res.url})")
-            st.markdown(
-                f"""<script>window.location.href="{res.url}"</script>""",
-                unsafe_allow_html=True
-            )
 
+# Google Login
+
+if st.button("🔵 Continue with Google"):
+    res = supabase.auth.sign_in_with_oauth({
+        "provider": "google",
+        "options": {
+            "redirect_to": REDIRECT_URL
+        }
+    })
+
+    if res.url:
+        st.markdown(
+            f"""
+            <script>
+            window.location.href = "{res.url}";
+            </script>
+            """,
+            unsafe_allow_html=True
+        )
 # -------------------------------
 # SIGNUP (WITH CONFIRM PASSWORD)
 # -------------------------------
