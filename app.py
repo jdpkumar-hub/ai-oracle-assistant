@@ -63,8 +63,8 @@ if "code" in params:
 
         user = get_user()
         if user and "user" not in st.session_state:
-        st.session_state.user = user
-        st.rerun()
+            st.session_state.user = user
+            st.rerun()
  
 
     except Exception as e:
