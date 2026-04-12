@@ -11,6 +11,9 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 REDIRECT_URL = "https://ai-oracle-assistant.streamlit.app"
 
+# -------------------------------
+# 🔑 RESET PASSWORD SCREEN
+# -------------------------------
 if st.session_state.get("reset_mode"):
 
     st.title("🔑 Set New Password")
@@ -33,6 +36,7 @@ if st.session_state.get("reset_mode"):
                 st.error(f"Error: {e}")
 
     st.stop()
+
 # -------------------------------
 # LOGIN (EMAIL + GOOGLE)
 # -------------------------------
@@ -54,7 +58,7 @@ def login():
                 st.success("Login successful")
                 st.rerun()
 
-        except Exception as e:
+        except Exception:
             st.error("Invalid credentials")
 
     st.divider()
@@ -92,20 +96,20 @@ def signup():
 
         try:
             res = supabase.auth.sign_up({
-            "email": email,
-            "password": password,
-            "options": {
-            "email_redirect_to": "https://ai-oracle-assistant.streamlit.app"
-            }
-        })
+                "email": email,
+                "password": password,
+                "options": {
+                    "email_redirect_to": REDIRECT_URL
+                }
+            })
 
-        if res.user:
-            st.success("Account created! Check your email for verification link")
-        else:
-            st.error("Signup failed")
+            if res.user:
+                st.success("Account created! Check your email for verification link")
+            else:
+                st.error("Signup failed")
 
-except Exception as e:
-    st.error(f"Error: {e}")
+        except Exception as e:
+            st.error(f"Error: {e}")
 
 # -------------------------------
 # RESET PASSWORD
@@ -117,15 +121,14 @@ def reset_password():
 
     if st.button("Send Reset Link"):
         try:
-            params = st.query_params
-            # 🔑 PASSWORD RESET HANDLER
-                if "type" in params and params["type"] == "recovery":
-                    st.session_state.reset_mode = True
-                    st.query_params.clear()
-                    st.rerun()
-                    st.success("Reset link sent to email")
-        except:
-            st.error("Failed to send reset email")
+            supabase.auth.reset_password_email(
+                email,
+                options={"redirect_to": REDIRECT_URL}
+            )
+            st.success("Reset link sent to email")
+
+        except Exception as e:
+            st.error(f"Failed to send reset email: {e}")
 
 # -------------------------------
 # GET USER
