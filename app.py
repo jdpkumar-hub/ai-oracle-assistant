@@ -166,12 +166,12 @@ if not user:
 with st.sidebar:
     st.image("image/logo2.png", width=220)
     pages = ["🏠 Dashboard", "💬 AI Chat", "📊 Reports", "📜 History", "⚙️ Settings"]
-        if is_admin(user):
-            pages.append("👑 Admin Panel")
-     page = st.radio("", pages)   
+
+    if is_admin(user):
+        pages.append("👑 Admin Panel")
+    page = st.radio("", pages)
     st.success(user.email)
     logout()
-
 # ================= DASHBOARD =================
 if page == "🏠 Dashboard":
     st.title("📊 Dashboard")
