@@ -14,6 +14,21 @@ if "user" not in st.session_state:
     st.session_state.user = None
 
 # -------------------------------
+# 👑 ADMIN CONFIG
+# -------------------------------
+ADMIN_EMAIL = "aidbaassistant@gmail.com"   # 👈 change to your email
+
+from supabase import create_client
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
+
+admin_client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+
+def is_admin(user):
+    return user and user.email == ADMIN_EMAIL
+    
+# -------------------------------
 # PDF GENERATOR
 # -------------------------------
 def create_pdf(text):
@@ -150,7 +165,10 @@ if not user:
 # ================= MAIN =================
 with st.sidebar:
     st.image("image/logo2.png", width=220)
-    page = st.radio("", ["🏠 Dashboard", "💬 AI Chat", "📊 Reports", "📜 History", "⚙️ Settings"])
+    pages = ["🏠 Dashboard", "💬 AI Chat", "📊 Reports", "📜 History", "⚙️ Settings"]
+    if is_admin(user):
+        pages.append("👑 Admin Panel")
+     page = st.radio("", pages)   
     st.success(user.email)
     logout()
 
@@ -253,6 +271,65 @@ elif page == "📊 Reports":
 # ================= SETTINGS =================
 elif page == "⚙️ Settings":
     st.title("Settings")
+    
+
+# ================= ADMIN PANEL =================
+elif page == "👑 Admin Panel":
+
+    st.title("👑 Admin Panel")
+
+    if not is_admin(user):
+        st.error("Access Denied")
+        st.stop()
+
+    # ---------------- USERS ----------------
+    st.subheader("👥 All Users")
+
+    try:
+        users = admin_client.auth.admin.list_users()
+
+        user_data = []
+
+        for u in users:
+            user_data.append({
+                "Email": u.email,
+                "Created": u.created_at,
+                "Last Login": u.last_sign_in_at
+            })
+
+        df = pd.DataFrame(user_data)
+        st.dataframe(df)
+
+    except Exception as e:
+        st.error(f"Error fetching users: {e}")
+
+    # ---------------- METRICS ----------------
+    st.subheader("📊 Activity Overview")
+
+    total_users = len(user_data)
+    active_users = sum(1 for u in user_data if u["Last Login"])
+
+    col1, col2 = st.columns(2)
+    col1.metric("Total Users", total_users)
+    col2.metric("Active Users", active_users)
+
+    # ---------------- DELETE USER ----------------
+    st.subheader("🗑️ Delete User")
+
+    email_to_delete = st.text_input("Enter email to delete")
+
+    if st.button("Delete User"):
+        try:
+            for u in users:
+                if u.email == email_to_delete:
+                    admin_client.auth.admin.delete_user(u.id)
+                    st.success("User deleted")
+                    st.rerun()
+
+            st.warning("User not found")
+
+        except Exception as e:
+            st.error(f"Delete failed: {e}")
     
 # =========================
 # 📌 FOOTER
