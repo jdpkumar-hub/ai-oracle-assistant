@@ -2,7 +2,6 @@ import streamlit as st
 from auth import login, signup, reset_password, logout, get_user, supabase
 from openai import OpenAI
 import pandas as pd
-from datetime import datetime
 
 # ===============================
 # 🔐 OAUTH CALLBACK
@@ -60,29 +59,43 @@ if user:
 user = st.session_state.user
 
 # ===============================
-# 🧠 USER PLAN FUNCTIONS
+# 🧠 USER PLAN FUNCTIONS (SAFE)
 # ===============================
 def ensure_user_plan(user):
-    res = supabase.table("user_plans")\
-        .select("*")\
-        .eq("email", user.email)\
-        .execute()
+    try:
+        if not user or not user.email:
+            return
 
-    if not res.data:
-        supabase.table("user_plans").insert({
-            "user_id": user.id,
-            "email": user.email,
-            "plan": "free",
-            "usage_count": 0
-        }).execute()
+        res = supabase.table("user_plans")\
+            .select("*")\
+            .eq("email", user.email)\
+            .execute()
+
+        if not res.data:
+            supabase.table("user_plans").insert({
+                "email": user.email,
+                "plan": "free",
+                "usage_count": 0
+            }).execute()
+
+    except Exception as e:
+        st.error(f"ensure_user_plan error: {e}")
 
 def get_user_plan(user):
-    data = supabase.table("user_plans")\
-        .select("*")\
-        .eq("email", user.email)\
-        .execute()
+    try:
+        res = supabase.table("user_plans")\
+            .select("*")\
+            .eq("email", user.email)\
+            .execute()
 
-    return data.data[0]
+        if not res.data:
+            return {"plan": "free", "usage_count": 0}
+
+        return res.data[0]
+
+    except Exception as e:
+        st.error(f"get_user_plan error: {e}")
+        return {"plan": "free", "usage_count": 0}
 
 def check_usage(user):
     data = get_user_plan(user)
@@ -92,12 +105,16 @@ def check_usage(user):
         st.stop()
 
 def increment_usage(user):
-    data = get_user_plan(user)
-    count = data["usage_count"]
+    try:
+        data = get_user_plan(user)
+        count = data["usage_count"]
 
-    supabase.table("user_plans").update({
-        "usage_count": count + 1
-    }).eq("email", user.email).execute()
+        supabase.table("user_plans").update({
+            "usage_count": count + 1
+        }).eq("email", user.email).execute()
+
+    except Exception as e:
+        st.error(f"increment_usage error: {e}")
 
 # ===============================
 # LOGIN UI (UNCHANGED)
@@ -147,7 +164,7 @@ with st.sidebar:
     logout()
 
 # ===============================
-# DASHBOARD (UNCHANGED)
+# DASHBOARD
 # ===============================
 if page == "Dashboard":
     st.title("📊 Dashboard")
@@ -165,7 +182,7 @@ if page == "Dashboard":
         st.line_chart(df.groupby(df["created_at"].dt.date).size())
 
 # ===============================
-# AI CHAT (UNCHANGED UI + SaaS LOGIC)
+# AI CHAT
 # ===============================
 elif page == "AI Chat":
 
@@ -296,7 +313,7 @@ Provide:
                 increment_usage(user)
 
 # ===============================
-# HISTORY (UNCHANGED)
+# HISTORY
 # ===============================
 elif page == "History":
     st.title("📜 History")
